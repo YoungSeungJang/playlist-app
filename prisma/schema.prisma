@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  nickname  String
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  createdPlaylists   Playlist[]       @relation("PlaylistCreator")
+  playlistMemberships PlaylistMember[]
+  addedTracks        PlaylistTrack[]  @relation("TrackAdder")
+
+  @@map("users")
+}
+
+model Playlist {
+  id         String   @id @default(cuid())
+  title      String
+  inviteCode String   @unique @map("invite_code")
+  createdBy  String   @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  creator User             @relation("PlaylistCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  members PlaylistMember[]
+  tracks  PlaylistTrack[]
+
+  @@map("playlists")
+}
+
+model PlaylistMember {
+  playlistId String   @map("playlist_id")
+  userId     String   @map("user_id")
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([playlistId, userId])
+  @@map("playlist_members")
+}
+
+model PlaylistTrack {
+  id             String   @id @default(cuid())
+  playlistId     String   @map("playlist_id")
+  spotifyTrackId String   @map("spotify_track_id")
+  position       Int
+  addedBy        String   @map("added_by")
+  addedAt        DateTime @default(now()) @map("added_at")
+
+  // Relations
+  playlist     Playlist     @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  addedByUser  User         @relation("TrackAdder", fields: [addedBy], references: [id], onDelete: Cascade)
+  spotifyTrack SpotifyTrack @relation(fields: [spotifyTrackId], references: [spotifyId], onDelete: Cascade)
+
+  @@unique([playlistId, position])
+  @@map("playlist_tracks")
+}
+
+model SpotifyTrack {
+  spotifyId   String  @id @map("spotify_id")
+  title       String
+  artist      String
+  album       String
+  coverUrl    String? @map("cover_url")
+  durationMs  Int     @map("duration_ms")
+  previewUrl  String? @map("preview_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  playlistTracks PlaylistTrack[]
+
+  @@map("spotify_tracks")
+}

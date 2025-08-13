@@ -1,0 +1,25 @@
+{
+  "name": "playlist-app",
+  "private": true,
+  "description": "Collaborative music playlist management app",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "type-check": "turbo type-check",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^1.10.16",
+    "turbo": "^1.10.16",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2",
+    "prisma": "^5.3.1",
+    "@prisma/client": "^5.3.1"
+  },
+  "packageManager": "pnpm@8.7.0",
+  "engines": {
+    "node": ">=18"
+  }
+}
