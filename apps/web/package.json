@@ -20,7 +20,11 @@
     "socket.io-client": "^4.7.2",
     "@dnd-kit/core": "^6.0.8",
     "@dnd-kit/sortable": "^7.0.2",
-    "@dnd-kit/utilities": "^3.2.1"
+    "@dnd-kit/utilities": "^3.2.1",
+    "@heroicons/react": "^2.0.18",
+    "clsx": "^2.0.0",
+    "ui": "workspace:*",
+    "shared": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",

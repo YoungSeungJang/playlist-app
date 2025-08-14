@@ -126,7 +126,67 @@ packages/
 - 🌐 Frontend: http://localhost:3000
 - 🌐 Backend: http://localhost:3001
 
-### 🔄 Phase 2: User Authentication System (NEXT)
+### 🎨 Phase 1.5: UI/UX 기반 구축 (NEXT - 우선 진행)
+
+**Priority: High** - 시각적 확인을 통한 개발 효율성 향상
+
+#### Tasks to Implement:
+1. **공통 UI 컴포넌트 라이브러리 확장**
+   - Card, Modal, Loading, Avatar, Badge 컴포넌트 추가
+   - 색상 팔레트 및 디자인 토큰 정의
+   - 컴포넌트 Props 인터페이스 표준화
+
+2. **전체 앱 레이아웃 구조**
+   - Header (로고, 네비게이션, 사용자 메뉴)
+   - Sidebar (메인 네비게이션)
+   - Layout (전체 페이지 구조)
+   - 반응형 디자인 적용
+
+3. **주요 페이지 UI 구현 (기능 없이 UI만)**
+   - 홈페이지 (대시보드 형태)
+   - 로그인/회원가입 페이지
+   - 플레이리스트 목록 및 상세 페이지
+   - 목업 데이터로 화면 구성
+
+4. **플레이리스트 관련 UI 컴포넌트**
+   - 플레이리스트 카드 (썸네일, 제목, 참여자 수)
+   - 생성 모달 (제목 입력, 초대 설정)
+   - 초대 코드 UI (공유, 입력)
+   - 곡 목록 표시 (드래그 가능한 구조)
+
+5. **음악 검색 및 실시간 UI**
+   - 검색창 (자동완성 UI 구조)
+   - 검색 결과 표시 (곡 카드들)
+   - 온라인 사용자 표시 (아바타 목록)
+   - 활동 피드 UI (실시간 알림 구조)
+
+#### Files to Create:
+**확장된 UI 컴포넌트:**
+- `packages/ui/src/components/Card.tsx`
+- `packages/ui/src/components/Modal.tsx`
+- `packages/ui/src/components/Loading.tsx`
+- `packages/ui/src/components/Avatar.tsx`
+- `packages/ui/src/components/Badge.tsx`
+
+**레이아웃 컴포넌트:**
+- `apps/web/src/components/layout/Layout.tsx`
+- `apps/web/src/components/layout/Header.tsx`
+- `apps/web/src/components/layout/Sidebar.tsx`
+
+**페이지 컴포넌트:**
+- `apps/web/src/pages/Home.tsx`
+- `apps/web/src/pages/Login.tsx`
+- `apps/web/src/pages/Register.tsx`
+- `apps/web/src/pages/PlaylistList.tsx`
+- `apps/web/src/pages/PlaylistDetail.tsx`
+
+**특화 컴포넌트:**
+- `apps/web/src/components/playlist/PlaylistCard.tsx`
+- `apps/web/src/components/playlist/CreatePlaylistModal.tsx`
+- `apps/web/src/components/music/TrackItem.tsx`
+- `apps/web/src/components/music/SearchBar.tsx`
+
+### 🔄 Phase 2: User Authentication System (AFTER UI)
 
 **Priority: High** - Foundation for all other features
 
@@ -142,11 +202,11 @@ packages/
    - Implement JWT token verification
    - Create user profile endpoints
 
-3. **Frontend Auth Components**
-   - Login/Register forms using shared UI components
+3. **Frontend Auth Integration**
+   - Connect existing UI to real authentication
    - Auth context/store with Zustand
    - Protected routes with React Router
-   - Profile management UI
+   - Profile management functionality
 
 4. **Database User Management**
    - Sync Supabase users with Prisma User model
@@ -156,9 +216,9 @@ packages/
 #### Files to Create/Modify:
 - `apps/api/src/middleware/auth.ts` - Auth middleware
 - `apps/api/src/routes/auth.ts` - Auth endpoints
-- `apps/web/src/components/auth/` - Login/Register components
 - `apps/web/src/store/authStore.ts` - Zustand auth state
 - `apps/web/src/hooks/useAuth.ts` - Auth custom hook
+- Existing UI components → Add real functionality
 
 ### 🎵 Phase 3: Playlist CRUD Operations (AFTER AUTH)
 
