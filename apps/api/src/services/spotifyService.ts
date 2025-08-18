@@ -279,7 +279,11 @@ export const searchMusic = async (query: string, limit: number = 20) => {
       timeout: spotifyConfig.requestTimeout,
     })
 
-    return response.data
+    return {
+      tracks: response.data.tracks?.items?.map(convertToSimpleTrack) || [],
+      artists: response.data.artists?.items?.map(convertToSimpleArtist) || [],
+      albums: response.data.albums?.items?.map(convertToSimpleAlbum) || [],
+    }
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response) {
