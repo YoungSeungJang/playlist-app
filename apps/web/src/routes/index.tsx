@@ -4,6 +4,7 @@ import Home from '../pages/Home'
 import PlaylistList from '../pages/PlaylistList'
 import SharedPlaylists from '../pages/SharedPlaylists'
 import PlaylistDetail from '../pages/PlaylistDetail'
+import SearchPage from '../pages/SearchPage'
 
 const AppRoutes: React.FC = () => {
   return (
@@ -12,6 +13,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/playlists" element={<PlaylistList />} />
       <Route path="/shared" element={<SharedPlaylists />} />
       <Route path="/playlist/:id" element={<PlaylistDetail />} />
+      <Route path="/search/:query?" element={<SearchPage />} />
     </Routes>
   )
 }

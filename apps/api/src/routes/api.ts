@@ -1,4 +1,5 @@
 import express, { type Router } from 'express'
+import spotifyRoutes from './spotify'
 
 const router: Router = express.Router()
 
@@ -10,6 +11,7 @@ router.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       api: '/api',
+      spotify: '/api/spotify',
     },
   })
 })
@@ -18,5 +20,7 @@ router.get('/', (req, res) => {
 // router.use('/playlists', playlistRoutes)
 // router.use('/auth', authRoutes)
 // router.use('/users', userRoutes)
+
+router.use('/spotify', spotifyRoutes)
 
 export default router

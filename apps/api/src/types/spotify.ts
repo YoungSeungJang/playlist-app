@@ -1,0 +1,69 @@
+// Spotify API 관련 타입 정의
+
+export interface SpotifyTrack {
+  id: string
+  name: string
+  artists: SpotifyArtist[]
+  album: SpotifyAlbum
+  duration_ms: number
+  preview_url: string | null
+  external_urls: {
+    spotify: string
+  }
+}
+
+export interface SpotifyArtist {
+  id: string
+  name: string
+  images?: SpotifyImage[]
+  followers?: {
+    total: number
+  }
+  external_urls: {
+    spotify: string
+  }
+}
+
+export interface SpotifyAlbum {
+  id: string
+  name: string
+  artists: SpotifyArtist[]
+  images: SpotifyImage[]
+  release_date: string
+  external_urls: {
+    spotify: string
+  }
+}
+
+export interface SpotifyImage {
+  url: string
+  height: number
+  width: number
+}
+
+export interface SpotifySearchResponse {
+  tracks: {
+    items: SpotifyTrack[]
+    total: number
+    limit: number
+    offset: number
+  }
+}
+
+export interface SpotifyTokenResponse {
+  access_token: string
+  token_type: string
+  expires_in: number
+}
+
+// 우리 앱에서 사용할 간소화된 트랙 타입
+export interface SimpleTrack {
+  id: string
+  title: string
+  artist: string
+  album: string
+  duration: string
+  preview_url: string | null
+  image_url: string | null
+  spotify_url: string
+}
