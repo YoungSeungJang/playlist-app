@@ -284,10 +284,7 @@ export const searchMusic = async (query: string, limit: number = 20) => {
         response.data.tracks?.items
           ?.sort((a: SpotifyTrack, b: SpotifyTrack) => b.popularity - a.popularity)
           .map(convertToSimpleTrack) || [],
-      artists:
-        response.data.artists?.items
-          ?.sort((a: SpotifyTrack, b: SpotifyTrack) => b.popularity - a.popularity)
-          .map(convertToSimpleArtist) || [],
+      artists: response.data.artists?.items?.map(convertToSimpleArtist) || [],
       albums: response.data.albums?.items?.map(convertToSimpleAlbum) || [],
     }
   } catch (error) {
