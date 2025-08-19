@@ -10,6 +10,7 @@ export interface SpotifyTrack {
   external_urls: {
     spotify: string
   }
+  popularity: number
 }
 
 export interface SpotifyArtist {
@@ -22,6 +23,7 @@ export interface SpotifyArtist {
   external_urls: {
     spotify: string
   }
+  popularity: number
 }
 
 export interface SpotifyAlbum {
