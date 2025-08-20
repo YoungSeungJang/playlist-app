@@ -1,5 +1,14 @@
 import { Router } from 'express'
-import { searchMusic, searchTracks, searchArtists, searchAlbums, getTrack, getTracks } from '../services/spotifyService'
+import {
+  getAlbumTracks,
+  getArtistDetail,
+  getTrack,
+  getTracks,
+  searchAlbums,
+  searchArtists,
+  searchMusic,
+  searchTracks,
+} from '../services/spotifyService'
 
 const router: Router = Router()
 
@@ -19,7 +28,7 @@ router.get('/search', async (req, res) => {
     }
 
     let result
-    
+
     // 타입별 검색 또는 통합 검색
     switch (type) {
       case 'track':
@@ -98,6 +107,54 @@ router.post('/tracks', async (req, res) => {
     console.error('Get tracks error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     res.status(500).json({ error: `Failed to get tracks: ${errorMessage}` })
+  }
+})
+
+// 앨범 상세 정보 (앨범 정보 + 수록곡)
+router.get('/album/:id/tracks', async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // ID 파라미터 검증
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'Album ID is required' })
+    }
+
+    const albumDetail = await getAlbumTracks(id)
+    res.json(albumDetail)
+  } catch (error) {
+    console.error('Get album tracks error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
+    if (errorMessage.includes('Album not found')) {
+      return res.status(404).json({ error: 'Album not found' })
+    }
+    
+    res.status(500).json({ error: `Failed to get album tracks: ${errorMessage}` })
+  }
+})
+
+// 아티스트 상세 정보 (아티스트 정보 + 인기곡 + 앨범)
+router.get('/artist/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // ID 파라미터 검증
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'Artist ID is required' })
+    }
+
+    const artistDetail = await getArtistDetail(id)
+    res.json(artistDetail)
+  } catch (error) {
+    console.error('Get artist detail error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
+    if (errorMessage.includes('Artist not found')) {
+      return res.status(404).json({ error: 'Artist not found' })
+    }
+    
+    res.status(500).json({ error: `Failed to get artist detail: ${errorMessage}` })
   }
 })
 

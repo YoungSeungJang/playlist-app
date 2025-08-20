@@ -1,42 +1,9 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { SearchData } from 'shared'
+import SearchNavigation from '../components/search/SearchNavigation'
 import SearchResults from '../components/search/SearchResults'
-
-// TODO: 실제 API와 연결할 때 사용할 타입들
-interface Track {
-  id: string
-  title: string
-  artist: string
-  album: string
-  duration: string
-  image_url: string | null
-  preview_url: string | null
-  spotify_url: string
-}
-
-interface Artist {
-  id: string
-  name: string
-  image_url: string | null
-  followers: number
-  spotify_url: string
-}
-
-interface Album {
-  id: string
-  name: string
-  artist: string
-  release_date: string
-  image_url: string | null
-  spotify_url: string
-}
-
-interface SearchData {
-  tracks: Track[]
-  artists: Artist[]
-  albums: Album[]
-}
 
 // 디바운싱 훅
 const useDebounce = (value: string, delay: number) => {
@@ -62,77 +29,35 @@ const SearchPage: React.FC = () => {
     tracks: [],
     artists: [],
     albums: [],
+    topResult: null,
   })
   const [isSearching, setIsSearching] = useState(false)
 
   // 300ms 디바운싱
   const debouncedSearchTerm = useDebounce(query || '', 300)
 
-  // 검색 API 호출 (디바운싱된 검색어로)
+  // 전체 검색 API 호출 (디바운싱된 검색어로)
   useEffect(() => {
     const performSearch = async () => {
       if (debouncedSearchTerm.length < 2) {
-        setSearchData({ tracks: [], artists: [], albums: [] })
+        setSearchData({ tracks: [], artists: [], albums: [], topResult: null })
         return
       }
 
       setIsSearching(true)
       try {
-        // TODO: 실제 API 호출로 교체
-        // const response = await fetch(`/api/music/search?q=${encodeURIComponent(debouncedSearchTerm)}`)
-        // const data = await response.json()
+        const apiUrl = `http://localhost:3001/api/spotify/search?q=${encodeURIComponent(debouncedSearchTerm)}`
+        const response = await fetch(apiUrl)
 
-        // Mock 데이터로 시뮬레이션
-        await new Promise(resolve => setTimeout(resolve, 500)) // 로딩 시뮬레이션
-
-        const mockData: SearchData = {
-          tracks: [
-            {
-              id: '1',
-              title: `${debouncedSearchTerm} - 검색된 곡 1`,
-              artist: '아티스트 A',
-              album: '앨범 A',
-              duration: '3:42',
-              image_url: null,
-              preview_url: null,
-              spotify_url: 'https://open.spotify.com/track/1',
-            },
-            {
-              id: '2',
-              title: `${debouncedSearchTerm} - 검색된 곡 2`,
-              artist: '아티스트 B',
-              album: '앨범 B',
-              duration: '4:15',
-              image_url: null,
-              preview_url: null,
-              spotify_url: 'https://open.spotify.com/track/2',
-            },
-          ],
-          artists: [
-            {
-              id: '1',
-              name: `${debouncedSearchTerm} - 아티스트`,
-              image_url: null,
-              followers: 1200000,
-              spotify_url: 'https://open.spotify.com/artist/1',
-            },
-          ],
-          albums: [
-            {
-              id: '1',
-              name: `${debouncedSearchTerm} - 앨범`,
-              artist: '아티스트 C',
-              release_date: '2023',
-              image_url: null,
-              spotify_url: 'https://open.spotify.com/album/1',
-            },
-          ],
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status}`)
         }
 
-        setSearchData(mockData)
+        const data: SearchData = await response.json()
+        setSearchData(data)
       } catch (error) {
         console.error('Search failed:', error)
-        setSearchData({ tracks: [], artists: [], albums: [] })
+        setSearchData({ tracks: [], artists: [], albums: [], topResult: null })
       } finally {
         setIsSearching(false)
       }
@@ -146,7 +71,10 @@ const SearchPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* 검색 필터 네비게이션 */}
+        {debouncedSearchTerm.length >= 2 && <SearchNavigation query={query || ''} />}
+
         {/* 검색 상태 */}
         {isSearching && (
           <div className="flex items-center justify-center py-12">

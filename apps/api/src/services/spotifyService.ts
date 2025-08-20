@@ -1,7 +1,8 @@
 import { spotifyConfig } from '@/config/spotify'
 import axios from 'axios'
+import { SimpleArtist, SimpleTrack, SimpleAlbum } from '@shared/types/music'
+import { formatDuration } from '@shared/utils/time'
 import {
-  SimpleTrack,
   SpotifyTrack,
   type SpotifyAlbum,
   type SpotifyArtist,
@@ -279,13 +280,23 @@ export const searchMusic = async (query: string, limit: number = 20) => {
       timeout: spotifyConfig.requestTimeout,
     })
 
+    // 원본 데이터를 먼저 변환
+    const allTracks = response.data.tracks?.items?.map(convertToSimpleTrack) || []
+    const allArtists = response.data.artists?.items?.map(convertToSimpleArtist) || []
+    const allAlbums = response.data.albums?.items?.map(convertToSimpleAlbum) || []
+
+    // topResult 먼저 선택 (전체 데이터에서)
+    const topResult = findTopResult({ _allTracks: allTracks, _allArtists: allArtists }, query)
+
     return {
-      tracks:
-        response.data.tracks?.items
-          ?.sort((a: SpotifyTrack, b: SpotifyTrack) => b.popularity - a.popularity)
-          .map(convertToSimpleTrack) || [],
-      artists: response.data.artists?.items?.map(convertToSimpleArtist) || [],
-      albums: response.data.albums?.items?.map(convertToSimpleAlbum) || [],
+      tracks: allTracks
+        .sort((a: SimpleTrack, b: SimpleTrack) => b.popularity - a.popularity)
+        .slice(0, 4), // 상위 4개만
+      artists: allArtists
+        .sort((a: SimpleArtist, b: SimpleArtist) => b.popularity - a.popularity)
+        .slice(0, 6), // 상위 6개만
+      albums: allAlbums.slice(0, 6),
+      topResult,
     }
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -303,22 +314,50 @@ export const searchMusic = async (query: string, limit: number = 20) => {
   }
 }
 
-// Spotify 데이터를 우리 형식으로 변환
-export const convertToSimpleTrack = (spotifyTrack: SpotifyTrack): SimpleTrack => {
-  // 재생시간을 분:초 형식으로 변환 (예: 217346ms → "3:37")
-  const formatDuration = (ms: number): string => {
-    const minutes = Math.floor(ms / 60000)
-    const seconds = Math.floor((ms % 60000) / 1000)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+// 상위 결과 선택 로직
+export const findTopResult = (searchData: any, query: string) => {
+  const { _allTracks: allTracks, _allArtists: allArtists } = searchData
+
+  // 1순위: artists[0]의 name에 검색어 포함 여부 체크
+  if (
+    allArtists &&
+    allArtists.length > 0 &&
+    allArtists[0].name.toLowerCase().includes(query.toLowerCase())
+  ) {
+    return {
+      type: 'artist',
+      item: allArtists[0],
+    }
   }
 
-  // 앨범 이미지 중 가장 작은 것 선택 (보통 64x64)
+  // 2순위: tracks[0] 선택
+  if (allTracks && allTracks.length > 0) {
+    return {
+      type: 'track',
+      item: allTracks[0],
+    }
+  }
+
+  return null
+}
+
+// Spotify 데이터를 우리 형식으로 변환
+export const convertToSimpleTrack = (spotifyTrack: SpotifyTrack): SimpleTrack => {
+  // 앨범 이미지 중 적절한 크기 선택 (중간 크기 우선, 없으면 큰 것)
   const getAlbumImage = (): string | null => {
     if (!spotifyTrack.album.images || spotifyTrack.album.images.length === 0) {
       return null
     }
-    // 이미지를 크기순으로 정렬해서 가장 작은 것 선택
-    const sortedImages = [...spotifyTrack.album.images].sort((a, b) => a.width - b.width)
+    // 이미지를 크기순으로 정렬해서 큰 것부터 선택
+    const sortedImages = [...spotifyTrack.album.images].sort((a, b) => b.width - a.width)
+    
+    // 300x300 크기의 이미지를 우선적으로 찾기
+    const mediumImage = sortedImages.find(img => img.width >= 250 && img.width <= 350)
+    if (mediumImage) {
+      return mediumImage.url
+    }
+    
+    // 300x300이 없으면 가장 큰 이미지 선택
     return sortedImages[0]?.url || null
   }
 
@@ -331,16 +370,25 @@ export const convertToSimpleTrack = (spotifyTrack: SpotifyTrack): SimpleTrack =>
     preview_url: spotifyTrack.preview_url,
     image_url: getAlbumImage(),
     spotify_url: spotifyTrack.external_urls.spotify,
+    popularity: spotifyTrack.popularity,
   }
 }
 
-export const convertToSimpleArtist = (spotifyArtist: SpotifyArtist): any => {
+export const convertToSimpleArtist = (spotifyArtist: SpotifyArtist): SimpleArtist => {
   const getArtistImage = (): string | null => {
     if (!spotifyArtist.images || spotifyArtist.images.length === 0) {
       return null
     }
-    // 이미지를 크기순으로 정렬해서 가장 작은 것 선택
-    const sortedImages = [...spotifyArtist.images].sort((a, b) => a.width - b.width)
+    // 이미지를 크기순으로 정렬해서 큰 것부터 선택
+    const sortedImages = [...spotifyArtist.images].sort((a, b) => b.width - a.width)
+    
+    // 300x300 크기의 이미지를 우선적으로 찾기
+    const mediumImage = sortedImages.find(img => img.width >= 250 && img.width <= 350)
+    if (mediumImage) {
+      return mediumImage.url
+    }
+    
+    // 300x300이 없으면 가장 큰 이미지 선택
     return sortedImages[0]?.url || null
   }
 
@@ -350,6 +398,7 @@ export const convertToSimpleArtist = (spotifyArtist: SpotifyArtist): any => {
     image_url: getArtistImage(),
     followers: spotifyArtist.followers?.total || 0,
     spotify_url: spotifyArtist.external_urls.spotify,
+    popularity: spotifyArtist.popularity,
   }
 }
 
@@ -358,8 +407,16 @@ export const convertToSimpleAlbum = (spotifyAlbum: SpotifyAlbum): any => {
     if (!spotifyAlbum.images || spotifyAlbum.images.length === 0) {
       return null
     }
-    // 이미지를 크기순으로 정렬해서 가장 작은 것 선택
-    const sortedImages = [...spotifyAlbum.images].sort((a, b) => a.width - b.width)
+    // 이미지를 크기순으로 정렬해서 큰 것부터 선택
+    const sortedImages = [...spotifyAlbum.images].sort((a, b) => b.width - a.width)
+    
+    // 300x300 크기의 이미지를 우선적으로 찾기
+    const mediumImage = sortedImages.find(img => img.width >= 250 && img.width <= 350)
+    if (mediumImage) {
+      return mediumImage.url
+    }
+    
+    // 300x300이 없으면 가장 큰 이미지 선택
     return sortedImages[0]?.url || null
   }
 
@@ -367,8 +424,199 @@ export const convertToSimpleAlbum = (spotifyAlbum: SpotifyAlbum): any => {
     id: spotifyAlbum.id,
     name: spotifyAlbum.name,
     artist: spotifyAlbum.artists.map(artist => artist.name).join(', '),
-    release_date: spotifyAlbum.release_date.split('-')[0], // 년도만 추출
+    release_date: spotifyAlbum.release_date,
     image_url: getAlbumImage(),
     spotify_url: spotifyAlbum.external_urls.spotify,
+  }
+}
+
+// 앨범 수록곡 조회
+export const getAlbumTracks = async (albumId: string): Promise<{ album: SimpleAlbum; tracks: SimpleTrack[] }> => {
+  const token = await getAccessToken()
+
+  try {
+    // 앨범 정보와 수록곡을 병렬로 조회
+    const [albumResponse, tracksResponse] = await Promise.all([
+      axios.get(`${spotifyConfig.baseUrl}/albums/${albumId}`, {
+        params: { market: 'KR' },
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: spotifyConfig.requestTimeout,
+      }),
+      axios.get(`${spotifyConfig.baseUrl}/albums/${albumId}/tracks`, {
+        params: { market: 'KR', limit: 50 },
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: spotifyConfig.requestTimeout,
+      })
+    ])
+
+    if (!albumResponse.data || !tracksResponse.data.items) {
+      throw new Error('Invalid response from Spotify API')
+    }
+
+    const album = convertToSimpleAlbum(albumResponse.data)
+    
+    // 앨범 수록곡은 album 정보가 없으므로 수동으로 추가
+    const tracks = tracksResponse.data.items.map((track: any) => ({
+      id: track.id,
+      title: track.name,
+      artist: track.artists.map((artist: any) => artist.name).join(', '),
+      album: album.name,
+      duration: formatDuration(track.duration_ms),
+      preview_url: track.preview_url,
+      image_url: album.image_url, // 앨범 이미지 사용
+      spotify_url: track.external_urls.spotify,
+      popularity: 0 // 수록곡은 popularity 정보가 없음
+    }))
+
+    return { album, tracks }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        throw new Error('Album not found')
+      }
+      if (error.response) {
+        throw new Error(
+          `Spotify API error: ${error.response.status} - ${error.response.data?.error?.message || 'Unknown error'}`
+        )
+      } else if (error.request) {
+        throw new Error('Network error: Unable to connect to Spotify API')
+      }
+    }
+    throw new Error(
+      `Failed to get album tracks: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
+  }
+}
+
+// 아티스트 상세 정보 조회
+export const getArtist = async (artistId: string): Promise<SimpleArtist | null> => {
+  const token = await getAccessToken()
+
+  try {
+    const response = await axios.get(`${spotifyConfig.baseUrl}/artists/${artistId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: spotifyConfig.requestTimeout,
+    })
+
+    if (!response.data) {
+      return null
+    }
+
+    return convertToSimpleArtist(response.data)
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        return null
+      }
+      if (error.response) {
+        throw new Error(
+          `Spotify API error: ${error.response.status} - ${error.response.data?.error?.message || 'Unknown error'}`
+        )
+      } else if (error.request) {
+        throw new Error('Network error: Unable to connect to Spotify API')
+      }
+    }
+    throw new Error(
+      `Failed to get artist: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
+  }
+}
+
+// 아티스트 인기곡 조회
+export const getArtistTopTracks = async (artistId: string): Promise<SimpleTrack[]> => {
+  const token = await getAccessToken()
+
+  try {
+    const response = await axios.get(`${spotifyConfig.baseUrl}/artists/${artistId}/top-tracks`, {
+      params: { market: 'KR' },
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: spotifyConfig.requestTimeout,
+    })
+
+    if (!response.data.tracks) {
+      return []
+    }
+
+    return response.data.tracks.map(convertToSimpleTrack)
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        return []
+      }
+      if (error.response) {
+        throw new Error(
+          `Spotify API error: ${error.response.status} - ${error.response.data?.error?.message || 'Unknown error'}`
+        )
+      } else if (error.request) {
+        throw new Error('Network error: Unable to connect to Spotify API')
+      }
+    }
+    throw new Error(
+      `Failed to get artist top tracks: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
+  }
+}
+
+// 아티스트 앨범 목록 조회
+export const getArtistAlbums = async (artistId: string): Promise<SimpleAlbum[]> => {
+  const token = await getAccessToken()
+
+  try {
+    const response = await axios.get(`${spotifyConfig.baseUrl}/artists/${artistId}/albums`, {
+      params: { 
+        market: 'KR',
+        include_groups: 'album,single',
+        limit: 20
+      },
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: spotifyConfig.requestTimeout,
+    })
+
+    if (!response.data.items) {
+      return []
+    }
+
+    return response.data.items.map(convertToSimpleAlbum)
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        return []
+      }
+      if (error.response) {
+        throw new Error(
+          `Spotify API error: ${error.response.status} - ${error.response.data?.error?.message || 'Unknown error'}`
+        )
+      } else if (error.request) {
+        throw new Error('Network error: Unable to connect to Spotify API')
+      }
+    }
+    throw new Error(
+      `Failed to get artist albums: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
+  }
+}
+
+// 아티스트 상세 정보 통합 조회 (아티스트 정보 + 인기곡 + 앨범)
+export const getArtistDetail = async (artistId: string) => {
+  try {
+    const [artist, topTracks, albums] = await Promise.all([
+      getArtist(artistId),
+      getArtistTopTracks(artistId),
+      getArtistAlbums(artistId)
+    ])
+
+    if (!artist) {
+      throw new Error('Artist not found')
+    }
+
+    return {
+      artist,
+      topTracks: topTracks.slice(0, 10), // 상위 10곡만
+      albums: albums.slice(0, 12) // 상위 12개 앨범만
+    }
+  } catch (error) {
+    throw new Error(
+      `Failed to get artist detail: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
   }
 }

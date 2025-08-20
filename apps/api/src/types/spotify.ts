@@ -58,14 +58,3 @@ export interface SpotifyTokenResponse {
   expires_in: number
 }
 
-// 우리 앱에서 사용할 간소화된 트랙 타입
-export interface SimpleTrack {
-  id: string
-  title: string
-  artist: string
-  album: string
-  duration: string
-  preview_url: string | null
-  image_url: string | null
-  spotify_url: string
-}

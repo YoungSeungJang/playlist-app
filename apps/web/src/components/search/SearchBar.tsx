@@ -23,8 +23,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
   // URL에서 검색어 추출 (검색 페이지인 경우)
   useEffect(() => {
     if (location.pathname.startsWith('/search/')) {
-      const urlQuery = decodeURIComponent(location.pathname.replace('/search/', ''))
-      setSearchTerm(urlQuery || '')
+      const pathParts = location.pathname.split('/')
+      // /search/:query 또는 /search/:query/:filter 형태에서 query 부분만 추출
+      if (pathParts.length >= 3 && pathParts[2]) {
+        const urlQuery = decodeURIComponent(pathParts[2])
+        setSearchTerm(urlQuery || '')
+      } else {
+        setSearchTerm('')
+      }
     } else {
       setSearchTerm('')
     }

@@ -1,19 +1,10 @@
 /**
- * Format duration from milliseconds to MM:SS or H:MM:SS format
+ * Format duration from milliseconds to MM:SS format (total minutes:seconds)
  */
 export function formatDuration(durationMs: number): string {
-  const seconds = Math.floor(durationMs / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  
-  const remainingSeconds = seconds % 60
-  const remainingMinutes = minutes % 60
-  
-  if (hours > 0) {
-    return `${hours}:${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
-  }
-  
-  return `${remainingMinutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  const minutes = Math.floor(durationMs / 60000)
+  const seconds = Math.floor((durationMs % 60000) / 1000)
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 /**
