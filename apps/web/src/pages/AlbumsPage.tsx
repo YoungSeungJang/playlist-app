@@ -4,22 +4,6 @@ import { useParams } from 'react-router-dom'
 import { SimpleAlbum } from 'shared'
 import SearchNavigation from '../components/search/SearchNavigation'
 
-// 디바운싱 훅
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(handler)
-    }
-  }, [value, delay])
-
-  return debouncedValue
-}
 
 const AlbumsPage: React.FC = () => {
   const { query } = useParams<{ query: string }>()
@@ -27,20 +11,17 @@ const AlbumsPage: React.FC = () => {
   const [albums, setAlbums] = useState<SimpleAlbum[]>([])
   const [isSearching, setIsSearching] = useState(false)
 
-  // 300ms 디바운싱
-  const debouncedSearchTerm = useDebounce(query || '', 300)
-
-  // 검색 API 호출 (앨범만)
+  // 검색 API 호출 (앨범만, URL 쿼리로 즉시 검색)
   useEffect(() => {
     const performSearch = async () => {
-      if (debouncedSearchTerm.length < 2) {
+      if (!query || query.length < 1) {
         setAlbums([])
         return
       }
 
       setIsSearching(true)
       try {
-        const apiUrl = `http://localhost:3001/api/spotify/search?q=${encodeURIComponent(debouncedSearchTerm)}&type=album&limit=20`
+        const apiUrl = `http://localhost:3001/api/spotify/search?q=${encodeURIComponent(query)}&type=album&limit=20`
         const response = await fetch(apiUrl)
 
         if (!response.ok) {
@@ -58,7 +39,7 @@ const AlbumsPage: React.FC = () => {
     }
 
     performSearch()
-  }, [debouncedSearchTerm])
+  }, [query])
 
   const handleAlbumClick = (album: SimpleAlbum) => {
     console.log('Viewing album:', album.name)
@@ -74,7 +55,7 @@ const AlbumsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4">
         {/* 검색 필터 네비게이션 */}
-        {debouncedSearchTerm.length >= 2 && <SearchNavigation query={query || ''} />}
+        {query && query.length >= 1 && <SearchNavigation query={query || ''} />}
 
         {/* 검색 상태 */}
         {isSearching && (
@@ -85,18 +66,18 @@ const AlbumsPage: React.FC = () => {
         )}
 
         {/* 검색 결과가 없는 경우 */}
-        {!isSearching && debouncedSearchTerm.length >= 2 && albums.length === 0 && (
+        {!isSearching && query && query.length >= 1 && albums.length === 0 && (
           <div className="text-center py-16">
             <MagnifyingGlassIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
             <h3 className="text-xl font-medium text-gray-900 mb-2">
-              "{debouncedSearchTerm}"에 대한 앨범 검색 결과가 없습니다
+              "{query}"에 대한 앨범 검색 결과가 없습니다
             </h3>
             <p className="text-gray-500">다른 검색어를 시도해보세요</p>
           </div>
         )}
 
         {/* 앨범 검색 결과 */}
-        {!isSearching && debouncedSearchTerm.length >= 2 && albums.length > 0 && (
+        {!isSearching && query && query.length >= 1 && albums.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">앨범</h2>

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import React, { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useSmartDebounce } from '../../hooks/useDebounce'
 
 interface SearchBarProps {
   placeholder?: string
@@ -9,45 +10,51 @@ interface SearchBarProps {
   autoFocus?: boolean
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ 
-  placeholder = "아티스트, 곡, 앨범 검색...", 
-  className = "",
+const SearchBar: React.FC<SearchBarProps> = ({
+  placeholder = '아티스트, 곡, 앨범 검색...',
+  className = '',
   size = 'md',
-  autoFocus = false
+  autoFocus = false,
 }) => {
   const navigate = useNavigate()
   const location = useLocation()
-  
+
   const [searchTerm, setSearchTerm] = useState('')
 
-  // URL에서 검색어 추출 (검색 페이지인 경우)
+  // 스마트 디바운싱 적용 (1글자: 800ms, 2글자+: 500ms)
+  const debouncedSearchTerm = useSmartDebounce(searchTerm)
+
+  // URL에서 검색어 추출하여 input과 동기화
   useEffect(() => {
     if (location.pathname.startsWith('/search/')) {
       const pathParts = location.pathname.split('/')
-      // /search/:query 또는 /search/:query/:filter 형태에서 query 부분만 추출
+      console.log(pathParts)
       if (pathParts.length >= 3 && pathParts[2]) {
         const urlQuery = decodeURIComponent(pathParts[2])
         setSearchTerm(urlQuery || '')
       } else {
         setSearchTerm('')
       }
-    } else {
-      setSearchTerm('')
+      if (!pathParts[2]) {
+        setSearchTerm('')
+        navigate('/')
+      }
     }
   }, [location.pathname])
 
-  // 실시간 URL 업데이트
+  // 디바운싱된 검색어로 네비게이션
+  useEffect(() => {
+    if (debouncedSearchTerm.trim()) {
+      navigate(`/search/${encodeURIComponent(debouncedSearchTerm)}`)
+    }
+  }, [debouncedSearchTerm])
+
+  // 입력 변화 처리
   const handleInputChange = (value: string) => {
     setSearchTerm(value)
-    
-    if (value.trim()) {
-      navigate(`/search/${encodeURIComponent(value)}`, { replace: true })
-    } else {
-      navigate('/', { replace: true })
-    }
   }
 
-  // Enter 키 처리 (이미 URL이 업데이트되어 있으므로 검색 페이지로 이동만)
+  // Enter 키로 즉시 검색
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && searchTerm.trim()) {
       navigate(`/search/${encodeURIComponent(searchTerm)}`)
@@ -58,31 +65,33 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const sizeClasses = {
     sm: 'h-8 text-sm pl-8 pr-3',
     md: 'h-10 text-base pl-10 pr-3',
-    lg: 'h-12 text-lg pl-12 pr-4'
+    lg: 'h-12 text-lg pl-12 pr-4',
   }
 
   const iconSizes = {
     sm: 'h-4 w-4',
-    md: 'h-5 w-5', 
-    lg: 'h-6 w-6'
+    md: 'h-5 w-5',
+    lg: 'h-6 w-6',
   }
 
   const iconPositions = {
     sm: 'left-2',
     md: 'left-3',
-    lg: 'left-4'
+    lg: 'left-4',
   }
 
   return (
     <div className={`relative ${className}`}>
-      <div className={`absolute inset-y-0 ${iconPositions[size]} flex items-center pointer-events-none`}>
+      <div
+        className={`absolute inset-y-0 ${iconPositions[size]} flex items-center pointer-events-none`}
+      >
         <MagnifyingGlassIcon className={`${iconSizes[size]} text-gray-400`} />
       </div>
       <input
         type="text"
         placeholder={placeholder}
         value={searchTerm}
-        onChange={(e) => handleInputChange(e.target.value)}
+        onChange={e => handleInputChange(e.target.value)}
         onKeyPress={handleKeyPress}
         autoFocus={autoFocus}
         className={`

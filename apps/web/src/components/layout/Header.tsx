@@ -1,6 +1,6 @@
 import { Bars3Icon, BellIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
-import { Avatar, Button, Modal } from 'ui'
+import { Avatar, Button } from 'ui'
 import SearchBar from '../search/SearchBar'
 
 interface HeaderProps {
@@ -58,11 +58,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
           {/* Search bar */}
           <div className="hidden md:block">
-            <SearchBar 
-              placeholder="플레이리스트 또는 곡 검색..." 
-              className="w-96"
-              size="md"
-            />
+            <SearchBar placeholder="플레이리스트 또는 곡 검색..." className="w-96" size="md" />
           </div>
         </div>
 
@@ -113,12 +109,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       </div>
 
       {/* Mobile Search Slide */}
-      <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-        showMobileSearch ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'
-      }`}>
+      <div
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          showMobileSearch ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
         <div className="border-t border-gray-200 bg-white">
           <div className="px-4 py-4">
-            <SearchBar 
+            <SearchBar
               placeholder="아티스트, 곡, 앨범 검색..."
               size="lg"
               autoFocus={showMobileSearch}
@@ -126,7 +124,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           </div>
         </div>
       </div>
-
     </header>
   )
 }

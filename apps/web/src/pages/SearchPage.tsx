@@ -5,23 +5,6 @@ import { SearchData } from 'shared'
 import SearchNavigation from '../components/search/SearchNavigation'
 import SearchResults from '../components/search/SearchResults'
 
-// 디바운싱 훅
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(handler)
-    }
-  }, [value, delay])
-
-  return debouncedValue
-}
-
 const SearchPage: React.FC = () => {
   const { query } = useParams<{ query: string }>()
 
@@ -33,20 +16,17 @@ const SearchPage: React.FC = () => {
   })
   const [isSearching, setIsSearching] = useState(false)
 
-  // 300ms 디바운싱
-  const debouncedSearchTerm = useDebounce(query || '', 300)
-
-  // 전체 검색 API 호출 (디바운싱된 검색어로)
+  // 전체 검색 API 호출 (URL 쿼리로 즉시 검색)
   useEffect(() => {
     const performSearch = async () => {
-      if (debouncedSearchTerm.length < 2) {
+      if (!query || query.length < 1) {
         setSearchData({ tracks: [], artists: [], albums: [], topResult: null })
         return
       }
 
       setIsSearching(true)
       try {
-        const apiUrl = `http://localhost:3001/api/spotify/search?q=${encodeURIComponent(debouncedSearchTerm)}`
+        const apiUrl = `http://localhost:3001/api/spotify/search?q=${encodeURIComponent(query)}`
         const response = await fetch(apiUrl)
 
         if (!response.ok) {
@@ -64,7 +44,7 @@ const SearchPage: React.FC = () => {
     }
 
     performSearch()
-  }, [debouncedSearchTerm])
+  }, [query])
 
   const totalResults =
     searchData.tracks.length + searchData.artists.length + searchData.albums.length
@@ -73,7 +53,7 @@ const SearchPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4">
         {/* 검색 필터 네비게이션 */}
-        {debouncedSearchTerm.length >= 2 && <SearchNavigation query={query || ''} />}
+        {query && query.length >= 1 && <SearchNavigation query={query || ''} />}
 
         {/* 검색 상태 */}
         {isSearching && (
@@ -84,18 +64,18 @@ const SearchPage: React.FC = () => {
         )}
 
         {/* 검색 결과가 없는 경우 */}
-        {!isSearching && debouncedSearchTerm.length >= 2 && totalResults === 0 && (
+        {!isSearching && query && query.length >= 1 && totalResults === 0 && (
           <div className="text-center py-16">
             <MagnifyingGlassIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
             <h3 className="text-xl font-medium text-gray-900 mb-2">
-              "{debouncedSearchTerm}"에 대한 검색 결과가 없습니다
+              "{query}"에 대한 검색 결과가 없습니다
             </h3>
             <p className="text-gray-500">다른 검색어를 시도해보세요</p>
           </div>
         )}
 
         {/* 검색 결과 */}
-        {!isSearching && debouncedSearchTerm.length >= 2 && totalResults > 0 && (
+        {!isSearching && query && query.length >= 1 && totalResults > 0 && (
           <SearchResults searchData={searchData} />
         )}
       </div>
