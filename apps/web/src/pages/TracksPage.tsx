@@ -1,11 +1,12 @@
 import { MagnifyingGlassIcon, PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { SimpleTrack } from 'shared'
 import SearchNavigation from '../components/search/SearchNavigation'
 
 const TracksPage: React.FC = () => {
   const { query } = useParams<{ query: string }>()
+  const navigate = useNavigate()
 
   const [tracks, setTracks] = useState<SimpleTrack[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -50,6 +51,16 @@ const TracksPage: React.FC = () => {
       console.log('Playing preview:', track.preview_url)
       // TODO: 미리듣기 기능 구현
     }
+  }
+
+  const handleArtistClick = (artistName: string) => {
+    // 아티스트 이름으로 검색하여 아티스트 상세페이지로 이동
+    navigate(`/search/${encodeURIComponent(artistName)}/artists`)
+  }
+
+  const handleAlbumClick = (albumName: string, artistName: string) => {
+    // 앨범 이름으로 검색하여 앨범 목록페이지로 이동
+    navigate(`/search/${encodeURIComponent(`${albumName} ${artistName}`)}/albums`)
   }
 
   return (
@@ -122,12 +133,22 @@ const TracksPage: React.FC = () => {
                   {/* 트랙 정보 */}
                   <div className="flex-1 min-w-0 ml-4">
                     <h3 className="font-medium text-gray-900 truncate">{track.title}</h3>
-                    <p className="text-sm text-gray-500 truncate">{track.artist}</p>
+                    <button
+                      onClick={() => handleArtistClick(track.artist)}
+                      className="text-sm text-gray-500 truncate hover:text-primary-600 hover:underline cursor-pointer text-left"
+                    >
+                      {track.artist}
+                    </button>
                   </div>
 
                   {/* 앨범 이름 */}
                   <div className="hidden md:block flex-1 min-w-0 px-4">
-                    <p className="text-sm text-gray-500 truncate">{track.album}</p>
+                    <button
+                      onClick={() => handleAlbumClick(track.album, track.artist)}
+                      className="text-sm text-gray-500 truncate hover:text-primary-600 hover:underline cursor-pointer text-left"
+                    >
+                      {track.album}
+                    </button>
                   </div>
 
                   {/* 인기도 */}

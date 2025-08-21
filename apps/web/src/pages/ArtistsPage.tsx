@@ -1,12 +1,13 @@
 import { MagnifyingGlassIcon, UserIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { SimpleArtist } from 'shared'
 import SearchNavigation from '../components/search/SearchNavigation'
 
 
 const ArtistsPage: React.FC = () => {
   const { query } = useParams<{ query: string }>()
+  const navigate = useNavigate()
 
   const [artists, setArtists] = useState<SimpleArtist[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -42,8 +43,7 @@ const ArtistsPage: React.FC = () => {
   }, [query])
 
   const handleArtistClick = (artist: SimpleArtist) => {
-    console.log('Viewing artist:', artist.name)
-    // TODO: 아티스트 상세 페이지로 이동
+    navigate(`/artist/${artist.id}`)
   }
 
   const formatFollowers = (followers: number): string => {

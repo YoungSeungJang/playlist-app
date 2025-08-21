@@ -28,7 +28,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
   useEffect(() => {
     if (location.pathname.startsWith('/search/')) {
       const pathParts = location.pathname.split('/')
-      console.log(pathParts)
       if (pathParts.length >= 3 && pathParts[2]) {
         const urlQuery = decodeURIComponent(pathParts[2])
         setSearchTerm(urlQuery || '')

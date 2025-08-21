@@ -8,6 +8,8 @@ import SearchPage from '../pages/SearchPage'
 import TracksPage from '../pages/TracksPage'
 import ArtistsPage from '../pages/ArtistsPage'
 import AlbumsPage from '../pages/AlbumsPage'
+import ArtistDetailPage from '../pages/ArtistDetailPage'
+import AlbumDetailPage from '../pages/AlbumDetailPage'
 
 const AppRoutes: React.FC = () => {
   return (
@@ -20,6 +22,8 @@ const AppRoutes: React.FC = () => {
       <Route path="/search/:query/tracks" element={<TracksPage />} />
       <Route path="/search/:query/artists" element={<ArtistsPage />} />
       <Route path="/search/:query/albums" element={<AlbumsPage />} />
+      <Route path="/artist/:id" element={<ArtistDetailPage />} />
+      <Route path="/album/:id" element={<AlbumDetailPage />} />
     </Routes>
   )
 }

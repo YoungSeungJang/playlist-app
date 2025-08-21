@@ -1,12 +1,13 @@
 import { CalendarIcon, MagnifyingGlassIcon, MusicalNoteIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { SimpleAlbum } from 'shared'
 import SearchNavigation from '../components/search/SearchNavigation'
 
 
 const AlbumsPage: React.FC = () => {
   const { query } = useParams<{ query: string }>()
+  const navigate = useNavigate()
 
   const [albums, setAlbums] = useState<SimpleAlbum[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -42,8 +43,7 @@ const AlbumsPage: React.FC = () => {
   }, [query])
 
   const handleAlbumClick = (album: SimpleAlbum) => {
-    console.log('Viewing album:', album.name)
-    // TODO: 앨범 상세 페이지로 이동
+    navigate(`/album/${album.id}`)
   }
 
   const formatReleaseDate = (dateString: string): string => {

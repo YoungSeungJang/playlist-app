@@ -1,6 +1,7 @@
 import { MusicalNoteIcon, PlayIcon, PlusIcon, UserIcon } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid'
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { SearchData, SimpleAlbum, SimpleArtist, SimpleTrack } from 'shared'
 
 // 타입 별칭 (기존 코드와의 호환성을 위해)
@@ -23,6 +24,7 @@ const formatFollowers = (count: number): string => {
 
 const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
   const { tracks, artists, albums, topResult } = searchData
+  const navigate = useNavigate()
 
   const handleAddToPlaylist = (track: Track) => {
     console.log('Add to playlist:', track)
@@ -32,6 +34,25 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
   const handlePlayPreview = (track: Track) => {
     console.log('Play preview:', track)
     // TODO: 미리듣기 재생 로직
+  }
+
+  const handleArtistClick = (artist: Artist) => {
+    navigate(`/artist/${artist.id}`)
+  }
+
+  const handleAlbumClick = (album: Album) => {
+    navigate(`/album/${album.id}`)
+  }
+
+  const handleTopResultClick = () => {
+    if (!topResult) return
+    
+    if (topResult.type === 'artist') {
+      navigate(`/artist/${topResult.item.id}`)
+    } else {
+      // 트랙의 경우는 클릭하지 않도록 함 (미리듣기 버튼만)
+      return
+    }
   }
 
   return (
@@ -44,7 +65,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
             {topResult && (
               <div className="xl:col-span-1">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">상위 결과</h3>
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-shadow h-80 flex flex-col justify-center">
+                <div 
+                  className={`bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-shadow h-80 flex flex-col justify-center ${
+                    topResult.type === 'artist' ? 'cursor-pointer' : ''
+                  }`}
+                  onClick={topResult.type === 'artist' ? handleTopResultClick : undefined}
+                >
                   {topResult.type === 'artist' ? (
                     <div>
                       <div className="w-32 h-32 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center mb-4">
@@ -59,7 +85,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
                         )}
                       </div>
                       <div>
-                        <h4 className="text-xl font-bold text-gray-900 mb-1">
+                        <h4 className="text-xl font-bold text-gray-900 mb-1 hover:text-primary-600 transition-colors">
                           {(topResult.item as Artist).name}
                         </h4>
                         <p className="text-gray-600 font-medium mb-1">아티스트</p>
@@ -188,7 +214,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
             {artists.slice(0, 4).map(artist => (
               <div
                 key={artist.id}
-                className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-lg transition-shadow text-center"
+                onClick={() => handleArtistClick(artist)}
+                className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-lg transition-shadow text-center cursor-pointer"
               >
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
                   {artist.image_url ? (
@@ -201,7 +228,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
                     <UserIcon className="w-10 h-10 text-white" />
                   )}
                 </div>
-                <h4 className="font-medium text-gray-900 truncate">{artist.name}</h4>
+                <h4 className="font-medium text-gray-900 truncate hover:text-primary-600 transition-colors">{artist.name}</h4>
                 <p className="text-sm text-gray-500">아티스트</p>
                 <p className="text-xs text-gray-400 mt-1">
                   팔로워 {formatFollowers(artist.followers)}명
@@ -222,7 +249,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
             {albums.slice(0, 4).map(album => (
               <div
                 key={album.id}
-                className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                onClick={() => handleAlbumClick(album)}
+                className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
               >
                 <div className="w-full aspect-square bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center mb-3">
                   {album.image_url ? (
@@ -235,7 +263,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
                     <MusicalNoteIcon className="w-12 h-12 text-white" />
                   )}
                 </div>
-                <h4 className="font-medium text-gray-900 truncate">{album.name}</h4>
+                <h4 className="font-medium text-gray-900 truncate hover:text-primary-600 transition-colors">{album.name}</h4>
                 <p className="text-sm text-gray-600 truncate">{album.artist}</p>
                 <p className="text-xs text-gray-400">{album.release_date}</p>
               </div>
