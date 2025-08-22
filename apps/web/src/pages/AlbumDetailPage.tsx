@@ -1,34 +1,21 @@
-import {
-  ArrowLeftIcon,
-  CalendarIcon,
-  MusicalNoteIcon,
-  PlayIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, CalendarIcon, MusicalNoteIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { SimpleAlbum, SimpleTrack } from 'shared'
+import TrackItem from '../components/track/TrackItem'
 
 // 앨범 상세 정보 타입 정의
 interface AlbumDetailData {
-  album: {
-    id: string
-    name: string
-    artist: string
-    release_date: string
+  album: SimpleAlbum & {
     total_tracks: number
-    image_url?: string
-    label?: string
+    label?: string | null
   }
-  tracks: Array<{
-    id: string
-    title: string
-    artist: string
-    album: string
-    track_number: number
-    duration: string
-    preview_url?: string
-    explicit: boolean
-  }>
+  tracks: Array<
+    SimpleTrack & {
+      track_number: number
+      explicit: boolean
+    }
+  >
 }
 
 const AlbumDetailPage: React.FC = () => {
@@ -77,21 +64,21 @@ const AlbumDetailPage: React.FC = () => {
     })
   }
 
-  const handlePlayPreview = (track: any) => {
+  const handlePlayPreview = (track: SimpleTrack) => {
     if (track.preview_url) {
       console.log('Playing preview:', track.preview_url)
       // TODO: 미리듣기 기능 구현
     }
   }
 
-  const handleAddToPlaylist = (track: any) => {
+  const handleAddToPlaylist = (track: SimpleTrack) => {
     console.log('Adding to playlist:', track.title)
     // TODO: 플레이리스트 추가 기능 구현
   }
 
-  const handleArtistClick = (artistName: string) => {
-    // 아티스트 이름으로 검색하여 아티스트 검색페이지로 이동
-    navigate(`/search/${encodeURIComponent(artistName)}/artists`)
+  const handleArtistClick = (artistId: string) => {
+    // 아티스트 ID로 직접 상세페이지 이동
+    navigate(`/artist/${artistId}`)
   }
 
   if (isLoading) {
@@ -187,12 +174,19 @@ const AlbumDetailPage: React.FC = () => {
             {/* 앨범 정보 */}
             <div className="text-center md:text-left flex-1">
               <h1 className="text-4xl font-bold text-gray-900 mb-2">{album.name}</h1>
-              <button
-                onClick={() => handleArtistClick(album.artist)}
-                className="text-xl text-gray-700 hover:text-primary-600 hover:underline cursor-pointer mb-4"
-              >
-                {album.artist}
-              </button>
+              <div className="text-xl text-gray-700 mb-4">
+                {album.artist_names.map((artistName, index) => (
+                  <span key={album.artist_ids[index]}>
+                    <button
+                      onClick={() => handleArtistClick(album.artist_ids[index])}
+                      className="hover:text-primary-600 hover:underline cursor-pointer"
+                    >
+                      {artistName}
+                    </button>
+                    {index < album.artist_names.length - 1 && ', '}
+                  </span>
+                ))}
+              </div>
 
               <div className="space-y-2 text-gray-600">
                 <div className="flex items-center justify-center md:justify-start">
@@ -216,81 +210,18 @@ const AlbumDetailPage: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">수록곡</h2>
-
-            {/* 트랙 목록 헤더 */}
-            <div className="grid grid-cols-12 gap-4 pb-3 border-b border-gray-200 text-sm font-medium text-gray-500">
-              <div className="col-span-1 text-center">#</div>
-              <div className="col-span-7 md:col-span-6">제목</div>
-              <div className="hidden md:block col-span-2">아티스트</div>
-              <div className="col-span-4 md:col-span-3 text-right">재생시간</div>
-            </div>
-
-            {/* 트랙 목록 */}
-            <div className="space-y-1 mt-3">
-              {tracks.map(track => (
-                <div
+            <div className="space-y-0">
+              {tracks.map((track, index) => (
+                <TrackItem
                   key={track.id}
-                  className="group grid grid-cols-12 gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors items-center"
-                >
-                  {/* 트랙 번호 / 재생 버튼 */}
-                  <div className="col-span-1 text-center">
-                    <div className="group-hover:hidden text-gray-400 text-sm">
-                      {track.track_number}
-                    </div>
-                    <div className="hidden group-hover:flex justify-center">
-                      <button
-                        onClick={() => handlePlayPreview(track)}
-                        className="p-1 rounded-full hover:bg-gray-200 text-gray-600 hover:text-primary-600"
-                        disabled={!track.preview_url}
-                        title={track.preview_url ? '미리듣기' : '미리듣기 불가'}
-                      >
-                        <PlayIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 트랙 제목 */}
-                  <div className="col-span-7 md:col-span-6 min-w-0">
-                    <div className="flex items-center">
-                      <h3 className="font-medium text-gray-900 truncate mr-2">{track.title}</h3>
-                      {track.explicit && (
-                        <span className="px-1 py-0.5 bg-gray-500 text-white text-xs rounded">
-                          E
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleArtistClick(track.artist)}
-                      className="text-sm text-gray-500 truncate md:hidden hover:text-primary-600 hover:underline cursor-pointer text-left"
-                    >
-                      {track.artist}
-                    </button>
-                  </div>
-
-                  {/* 아티스트 (데스크탑에서만 표시) */}
-                  <div className="hidden md:block col-span-2 min-w-0">
-                    <button
-                      onClick={() => handleArtistClick(track.artist)}
-                      className="text-sm text-gray-500 truncate hover:text-primary-600 hover:underline cursor-pointer text-left"
-                    >
-                      {track.artist}
-                    </button>
-                  </div>
-
-                  {/* 재생시간 + 추가 버튼 */}
-                  <div className="col-span-4 md:col-span-3 flex items-center justify-end gap-2">
-                    <div className="text-sm text-gray-500">{track.duration}</div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => handleAddToPlaylist(track)}
-                        className="p-1 rounded-full hover:bg-gray-200 text-gray-600 hover:text-primary-600"
-                        title="플레이리스트에 추가"
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  track={track}
+                  index={index}
+                  showAlbum={false}
+                  showIndex={true}
+                  onPlay={handlePlayPreview}
+                  onAdd={handleAddToPlaylist}
+                  onArtistClick={handleArtistClick}
+                />
               ))}
             </div>
           </div>

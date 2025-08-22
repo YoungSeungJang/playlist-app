@@ -53,14 +53,14 @@ const TracksPage: React.FC = () => {
     }
   }
 
-  const handleArtistClick = (artistName: string) => {
-    // 아티스트 이름으로 검색하여 아티스트 상세페이지로 이동
-    navigate(`/search/${encodeURIComponent(artistName)}/artists`)
+  const handleArtistClick = (artistId: string) => {
+    // 아티스트 ID로 직접 상세페이지 이동
+    navigate(`/artist/${artistId}`)
   }
 
-  const handleAlbumClick = (albumName: string, artistName: string) => {
-    // 앨범 이름으로 검색하여 앨범 목록페이지로 이동
-    navigate(`/search/${encodeURIComponent(`${albumName} ${artistName}`)}/albums`)
+  const handleAlbumClick = (albumId: string) => {
+    // 앨범 ID로 직접 상세페이지 이동
+    navigate(`/album/${albumId}`)
   }
 
   return (
@@ -133,18 +133,25 @@ const TracksPage: React.FC = () => {
                   {/* 트랙 정보 */}
                   <div className="flex-1 min-w-0 ml-4">
                     <h3 className="font-medium text-gray-900 truncate">{track.title}</h3>
-                    <button
-                      onClick={() => handleArtistClick(track.artist)}
-                      className="text-sm text-gray-500 truncate hover:text-primary-600 hover:underline cursor-pointer text-left"
-                    >
-                      {track.artist}
-                    </button>
+                    <div className="text-sm text-gray-500 truncate">
+                      {track.artist_names.map((artistName, index) => (
+                        <span key={track.artist_ids[index]}>
+                          <button
+                            onClick={() => handleArtistClick(track.artist_ids[index])}
+                            className="hover:text-primary-600 hover:underline cursor-pointer"
+                          >
+                            {artistName}
+                          </button>
+                          {index < track.artist_names.length - 1 && ', '}
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
                   {/* 앨범 이름 */}
                   <div className="hidden md:block flex-1 min-w-0 px-4">
                     <button
-                      onClick={() => handleAlbumClick(track.album, track.artist)}
+                      onClick={() => handleAlbumClick(track.album_id)}
                       className="text-sm text-gray-500 truncate hover:text-primary-600 hover:underline cursor-pointer text-left"
                     >
                       {track.album}

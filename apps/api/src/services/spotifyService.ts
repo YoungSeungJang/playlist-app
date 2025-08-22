@@ -364,13 +364,17 @@ export const convertToSimpleTrack = (spotifyTrack: SpotifyTrack): SimpleTrack =>
   return {
     id: spotifyTrack.id,
     title: spotifyTrack.name,
-    artist: spotifyTrack.artists.map(artist => artist.name).join(', '),
+    artist: spotifyTrack.artists.map(artist => artist.name).join(', '), // 호환성을 위해 유지
     album: spotifyTrack.album.name,
     duration: formatDuration(spotifyTrack.duration_ms),
     preview_url: spotifyTrack.preview_url,
     image_url: getAlbumImage(),
     spotify_url: spotifyTrack.external_urls.spotify,
     popularity: spotifyTrack.popularity,
+    // 새로 추가된 필드들
+    artist_ids: spotifyTrack.artists.map(artist => artist.id),
+    artist_names: spotifyTrack.artists.map(artist => artist.name),
+    album_id: spotifyTrack.album.id,
   }
 }
 
@@ -423,10 +427,13 @@ export const convertToSimpleAlbum = (spotifyAlbum: SpotifyAlbum): any => {
   return {
     id: spotifyAlbum.id,
     name: spotifyAlbum.name,
-    artist: spotifyAlbum.artists.map(artist => artist.name).join(', '),
+    artist: spotifyAlbum.artists.map(artist => artist.name).join(', '), // 호환성을 위해 유지
     release_date: spotifyAlbum.release_date,
     image_url: getAlbumImage(),
     spotify_url: spotifyAlbum.external_urls.spotify,
+    // 새로 추가된 필드들
+    artist_ids: spotifyAlbum.artists.map(artist => artist.id),
+    artist_names: spotifyAlbum.artists.map(artist => artist.name),
   }
 }
 
@@ -453,19 +460,27 @@ export const getAlbumTracks = async (albumId: string): Promise<{ album: SimpleAl
       throw new Error('Invalid response from Spotify API')
     }
 
-    const album = convertToSimpleAlbum(albumResponse.data)
+    const album = {
+      ...convertToSimpleAlbum(albumResponse.data),
+      total_tracks: albumResponse.data.total_tracks,
+      label: albumResponse.data.label || null,
+    }
     
     // 앨범 수록곡은 album 정보가 없으므로 수동으로 추가
     const tracks = tracksResponse.data.items.map((track: any) => ({
       id: track.id,
       title: track.name,
-      artist: track.artists.map((artist: any) => artist.name).join(', '),
+      artist: track.artists.map((artist: any) => artist.name).join(', '), // 호환성을 위해 유지
       album: album.name,
       duration: formatDuration(track.duration_ms),
       preview_url: track.preview_url,
       image_url: album.image_url, // 앨범 이미지 사용
       spotify_url: track.external_urls.spotify,
-      popularity: 0 // 수록곡은 popularity 정보가 없음
+      popularity: 0, // 수록곡은 popularity 정보가 없음
+      // 새로 추가된 필드들
+      artist_ids: track.artists.map((artist: any) => artist.id),
+      artist_names: track.artists.map((artist: any) => artist.name),
+      album_id: albumId, // 요청한 앨범 ID 사용
     }))
 
     return { album, tracks }

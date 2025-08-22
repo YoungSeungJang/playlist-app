@@ -1,8 +1,8 @@
-import { MusicalNoteIcon, PlayIcon, PlusIcon, UserIcon } from '@heroicons/react/24/outline'
-import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid'
+import { MusicalNoteIcon, PlayIcon, UserIcon } from '@heroicons/react/24/outline'
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SearchData, SimpleAlbum, SimpleArtist, SimpleTrack } from 'shared'
+import TrackItem from '../track/TrackItem'
 
 // 타입 별칭 (기존 코드와의 호환성을 위해)
 type Track = SimpleTrack
@@ -119,11 +119,36 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
                         <h4 className="text-xl font-bold text-gray-900 mb-1">
                           {(topResult.item as Track).title}
                         </h4>
-                        <p className="text-gray-600 font-medium mb-1">
-                          {(topResult.item as Track).artist}
-                        </p>
+                        <div className="text-gray-600 font-medium mb-1">
+                          {(topResult.item as Track).artist_names.map((artistName, index) => (
+                            <span key={(topResult.item as Track).artist_ids[index]}>
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  handleArtistClick({
+                                    id: (topResult.item as Track).artist_ids[index],
+                                  } as Artist)
+                                }}
+                                className="hover:text-primary-600 hover:underline cursor-pointer"
+                              >
+                                {artistName}
+                              </button>
+                              {index < (topResult.item as Track).artist_names.length - 1 && ', '}
+                            </span>
+                          ))}
+                        </div>
                         <p className="text-sm text-gray-500">
-                          {(topResult.item as Track).album} • {(topResult.item as Track).duration}
+                          <button
+                            onClick={e => {
+                              e.stopPropagation()
+                              handleAlbumClick({ id: (topResult.item as Track).album_id } as Album)
+                            }}
+                            className="hover:text-primary-600 hover:underline cursor-pointer"
+                          >
+                            {(topResult.item as Track).album}
+                          </button>
+                          {' • '}
+                          {(topResult.item as Track).duration}
                         </p>
                       </div>
                     </div>
@@ -140,62 +165,17 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
                 </div>
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-80 flex flex-col justify-center">
                   {tracks.slice(0, 4).map((track, index) => (
-                    <div
+                    <TrackItem
                       key={track.id}
-                      className="flex items-center space-x-3 p-3 hover:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="flex-shrink-0 text-gray-400 w-6 text-center text-sm">
-                        {index + 1}
-                      </div>
-
-                      <div className="relative flex-shrink-0">
-                        <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-red-500 rounded-md flex items-center justify-center">
-                          {track.image_url ? (
-                            <img
-                              src={track.image_url}
-                              alt={track.album}
-                              className="w-12 h-12 rounded-md object-cover"
-                            />
-                          ) : (
-                            <MusicalNoteIcon className="w-6 h-6 text-white" />
-                          )}
-                        </div>
-                        {track.preview_url && (
-                          <button
-                            onClick={() => handlePlayPreview(track)}
-                            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-50 rounded-md flex items-center justify-center opacity-0 hover:opacity-100 transition-all"
-                          >
-                            <PlayIcon className="w-4 h-4 text-white" />
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {track.title}
-                        </h4>
-                        <p className="text-sm text-gray-600 truncate">{track.artist}</p>
-                      </div>
-
-                      <div className="flex-1 min-w-0 hidden md:block">
-                        <p className="text-sm text-gray-600 truncate">{track.album}</p>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <button className="p-1 text-gray-400 hover:text-red-500 transition-colors">
-                          <HeartSolidIcon className="w-4 h-4" />
-                        </button>
-                        <div className="text-sm text-gray-500 w-12 text-right">
-                          {track.duration}
-                        </div>
-                        <button
-                          onClick={() => handleAddToPlaylist(track)}
-                          className="p-1 text-gray-400 hover:text-primary-500 transition-colors"
-                        >
-                          <PlusIcon className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
+                      track={track}
+                      index={index}
+                      showAlbum={true}
+                      showIndex={true}
+                      onPlay={handlePlayPreview}
+                      onAdd={handleAddToPlaylist}
+                      onArtistClick={(artistId) => handleArtistClick({ id: artistId } as Artist)}
+                      onAlbumClick={(albumId) => handleAlbumClick({ id: albumId } as Album)}
+                    />
                   ))}
                 </div>
               </div>
