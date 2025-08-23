@@ -406,7 +406,7 @@ export const convertToSimpleArtist = (spotifyArtist: SpotifyArtist): SimpleArtis
   }
 }
 
-export const convertToSimpleAlbum = (spotifyAlbum: SpotifyAlbum): any => {
+export const convertToSimpleAlbum = (spotifyAlbum: SpotifyAlbum): SimpleAlbum => {
   const getAlbumImage = (): string | null => {
     if (!spotifyAlbum.images || spotifyAlbum.images.length === 0) {
       return null
@@ -431,6 +431,7 @@ export const convertToSimpleAlbum = (spotifyAlbum: SpotifyAlbum): any => {
     release_date: spotifyAlbum.release_date,
     image_url: getAlbumImage(),
     spotify_url: spotifyAlbum.external_urls.spotify,
+    album_type: spotifyAlbum.album_type,
     // 새로 추가된 필드들
     artist_ids: spotifyAlbum.artists.map(artist => artist.id),
     artist_names: spotifyAlbum.artists.map(artist => artist.name),
@@ -573,7 +574,7 @@ export const getArtistTopTracks = async (artistId: string): Promise<SimpleTrack[
 }
 
 // 아티스트 앨범 목록 조회
-export const getArtistAlbums = async (artistId: string): Promise<SimpleAlbum[]> => {
+export const getArtistAlbums = async (artistId: string): Promise<(SimpleAlbum & { total_tracks: number })[]> => {
   const token = await getAccessToken()
 
   try {
@@ -591,7 +592,10 @@ export const getArtistAlbums = async (artistId: string): Promise<SimpleAlbum[]> 
       return []
     }
 
-    return response.data.items.map(convertToSimpleAlbum)
+    return response.data.items.map((album: any) => ({
+      ...convertToSimpleAlbum(album),
+      total_tracks: album.total_tracks || 0
+    }))
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {

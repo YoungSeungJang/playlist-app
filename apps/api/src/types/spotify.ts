@@ -32,6 +32,8 @@ export interface SpotifyAlbum {
   artists: SpotifyArtist[]
   images: SpotifyImage[]
   release_date: string
+  album_type: string // album, single, compilation 등
+  total_tracks?: number // 앨범 수록곡 수 (선택적)
   external_urls: {
     spotify: string
   }

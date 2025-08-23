@@ -58,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
           {/* Search bar */}
           <div className="hidden md:block">
-            <SearchBar placeholder="플레이리스트 또는 곡 검색..." className="w-96" size="md" />
+            <SearchBar placeholder="아티스트, 곡, 앨범 검색..." className="w-96" size="md" />
           </div>
         </div>
 

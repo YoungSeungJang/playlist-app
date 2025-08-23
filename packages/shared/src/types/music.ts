@@ -35,6 +35,7 @@ export interface SimpleAlbum {
   release_date: string
   image_url: string | null
   spotify_url: string
+  album_type: string // 앨범 타입 (album, single, compilation 등)
   // 새로 추가된 필드들
   artist_ids: string[] // 개별 아티스트 ID 배열
   artist_names: string[] // 개별 아티스트 이름 배열

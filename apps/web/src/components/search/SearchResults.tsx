@@ -3,6 +3,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SearchData, SimpleAlbum, SimpleArtist, SimpleTrack } from 'shared'
 import TrackItem from '../track/TrackItem'
+import AlbumItem from '../track/AlbumItem'
 
 // 타입 별칭 (기존 코드와의 호환성을 위해)
 type Track = SimpleTrack
@@ -227,25 +228,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {albums.slice(0, 4).map(album => (
-              <div
-                key={album.id}
-                onClick={() => handleAlbumClick(album)}
-                className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <div className="w-full aspect-square bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center mb-3">
-                  {album.image_url ? (
-                    <img
-                      src={album.image_url}
-                      alt={album.name}
-                      className="w-full h-full rounded-lg object-cover"
-                    />
-                  ) : (
-                    <MusicalNoteIcon className="w-12 h-12 text-white" />
-                  )}
-                </div>
-                <h4 className="font-medium text-gray-900 truncate hover:text-primary-600 transition-colors">{album.name}</h4>
-                <p className="text-sm text-gray-600 truncate">{album.artist}</p>
-                <p className="text-xs text-gray-400">{album.release_date}</p>
+              <div key={album.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                <AlbumItem
+                  album={album}
+                  showArtist={true}
+                  onClick={handleAlbumClick}
+                />
               </div>
             ))}
           </div>

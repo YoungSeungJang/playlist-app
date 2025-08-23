@@ -1,8 +1,9 @@
+import AlbumItem from '@/components/track/AlbumItem'
 import TrackItem from '@/components/track/TrackItem'
 import { ArrowLeftIcon, UserIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { SimpleTrack } from 'shared'
+import { SimpleTrack, SimpleAlbum } from 'shared'
 
 // 아티스트 상세 정보 타입 정의
 interface ArtistDetailData {
@@ -15,15 +16,9 @@ interface ArtistDetailData {
     genres: string[]
   }
   topTracks: SimpleTrack[]
-  albums: Array<{
-    id: string
-    name: string
-    artist: string
-    release_date: string
-    image_url?: string
+  albums: (SimpleAlbum & {
     total_tracks: number
-    album_type: string
-  }>
+  })[]
 }
 
 const ArtistDetailPage: React.FC = () => {
@@ -70,11 +65,6 @@ const ArtistDetailPage: React.FC = () => {
       return `${(followers / 1000).toFixed(1)}K`
     }
     return followers.toString()
-  }
-
-  const formatReleaseDate = (dateString: string): string => {
-    const date = new Date(dateString)
-    return date.getFullYear().toString()
   }
 
   const handlePlayPreview = (track: any) => {
@@ -220,36 +210,12 @@ const ArtistDetailPage: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">앨범</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
                 {albums.map(album => (
-                  <div
+                  <AlbumItem
                     key={album.id}
-                    onClick={() => handleAlbumClick(album)}
-                    className="group cursor-pointer"
-                  >
-                    {/* 앨범 이미지 */}
-                    <div className="aspect-square mb-3 bg-gray-200 rounded-lg overflow-hidden">
-                      {album.image_url ? (
-                        <img
-                          src={album.image_url}
-                          alt={album.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <UserIcon className="w-12 h-12 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 앨범 정보 */}
-                    <div>
-                      <h3 className="font-semibold text-gray-900 truncate mb-1 group-hover:text-primary-600 transition-colors">
-                        {album.name}
-                      </h3>
-                      <p className="text-sm text-gray-500 truncate">
-                        {formatReleaseDate(album.release_date)} • {album.album_type}
-                      </p>
-                    </div>
-                  </div>
+                    album={album}
+                    showArtist={false}
+                    onClick={handleAlbumClick}
+                  />
                 ))}
               </div>
             </div>
