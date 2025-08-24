@@ -2,6 +2,7 @@ import { Bars3Icon, BellIcon, MagnifyingGlassIcon } from '@heroicons/react/24/ou
 import React, { useEffect, useState } from 'react'
 import { Avatar, Button } from 'ui'
 import SearchBar from '../search/SearchBar'
+import { useAuth } from '@/hooks/useAuth'
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -9,14 +10,18 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [showMobileSearch, setShowMobileSearch] = useState(false)
-
-  // Mock user data - 나중에 실제 인증 시스템과 연결
-  const mockUser = {
-    name: 'John Doe',
-    avatar: undefined, // Will show initials
-  }
+  const { user, isAuthenticated, signOut, signIn } = useAuth()
 
   const hasNotifications = true
+
+  // 임시 로그인 함수 (테스트용)
+  const handleTestLogin = async () => {
+    try {
+      await signIn('test@example.com', 'password123')
+    } catch (error) {
+      console.error('Login failed:', error)
+    }
+  }
 
   // Close mobile search when screen becomes desktop size
   useEffect(() => {
@@ -86,25 +91,75 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             </button>
           </div>
 
-          {/* User menu */}
-          <div className="flex items-center space-x-3">
-            <div className="hidden md:block text-right">
-              <p className="text-sm font-medium text-gray-900">{mockUser.name}</p>
-              <p className="text-xs text-gray-500">온라인</p>
-            </div>
-            <Avatar
-              name={mockUser.name}
-              src={mockUser.avatar}
-              size="md"
-              showOnline={true}
-              onClick={() => console.log('User menu clicked')}
-            />
-          </div>
+          {/* User section */}
+          {isAuthenticated && user ? (
+            <div className="flex items-center space-x-3">
+              {/* User info */}
+              <div className="hidden md:block text-right">
+                <p className="text-sm font-medium text-gray-900">{user.nickname}</p>
+                <p className="text-xs text-gray-500">온라인</p>
+              </div>
+              
+              {/* User avatar with menu */}
+              <div className="relative group">
+                <Avatar
+                  name={user.nickname}
+                  src={user.avatarUrl}
+                  size="md"
+                  showOnline={true}
+                  onClick={() => console.log('User menu clicked')}
+                />
+                
+                {/* Dropdown menu (hidden for now) */}
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="py-1">
+                    <button
+                      onClick={() => console.log('Profile clicked')}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      프로필
+                    </button>
+                    <button
+                      onClick={() => console.log('Settings clicked')}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      설정
+                    </button>
+                    <hr className="my-1" />
+                    <button
+                      onClick={signOut}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-          {/* Create playlist button */}
-          <Button variant="primary" size="sm">
-            새 플레이리스트
-          </Button>
+              {/* Create playlist button */}
+              <Button variant="primary" size="sm">
+                새 플레이리스트
+              </Button>
+            </div>
+          ) : (
+            // Login button for unauthenticated users
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => console.log('Sign up clicked')}
+              >
+                회원가입
+              </Button>
+              <Button 
+                variant="primary" 
+                size="sm"
+                onClick={handleTestLogin}
+              >
+                로그인
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
