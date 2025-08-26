@@ -1,15 +1,84 @@
+import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 import {
   FolderIcon,
   LightBulbIcon,
   MusicalNoteIcon,
   PlusIcon,
+  ShareIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline'
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Avatar, Badge, Button, Card } from 'ui'
 
 const Home: React.FC = () => {
+  console.log(supabase)
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+
+  // 로그인 필요한 기능 처리
+  const handleCreatePlaylist = () => {
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+    // TODO: 플레이리스트 생성 모달 또는 페이지로 이동
+    console.log('Create playlist clicked')
+  }
+
+  // 비로그인 사용자를 위한 랜딩 페이지
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <MusicalNoteIcon className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            나만의 플레이리스트를 만들어보세요
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            좋아하는 음악을 모아서 플레이리스트를 만들고, 친구들과 함께 공유해보세요. 실시간으로
+            협업하며 함께 음악을 즐길 수 있습니다.
+          </p>
+
+          {/* 기능 소개 */}
+          <div className="grid md:grid-cols-3 gap-8 mt-12">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <PlusIcon className="w-6 h-6 text-primary-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">플레이리스트 생성</h3>
+              <p className="text-gray-600">
+                원하는 음악을 검색하고 나만의 플레이리스트를 만들어보세요
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <UsersIcon className="w-6 h-6 text-primary-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">실시간 협업</h3>
+              <p className="text-gray-600">
+                친구들을 초대해서 함께 플레이리스트를 만들고 편집하세요
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <ShareIcon className="w-6 h-6 text-primary-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">쉬운 공유</h3>
+              <p className="text-gray-600">
+                만든 플레이리스트를 링크로 공유하고 다른 사람들과 음악을 나누세요
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 로그인 사용자를 위한 대시보드
   // Mock data for dashboard
   const stats = {
     totalPlaylists: 8,
@@ -68,7 +137,7 @@ const Home: React.FC = () => {
         <p className="text-lg text-gray-600 mb-6">
           친구들과 함께 플레이리스트를 만들고 관리해보세요
         </p>
-        <Button variant="primary" size="lg">
+        <Button variant="primary" size="lg" onClick={handleCreatePlaylist}>
           <PlusIcon className="w-5 h-5 mr-2" />새 플레이리스트 만들기
         </Button>
       </div>
