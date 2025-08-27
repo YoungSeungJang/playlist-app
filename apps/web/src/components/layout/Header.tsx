@@ -1,8 +1,10 @@
+import { useAuth } from '@/hooks/useAuth'
+import { useAuthStore } from '@/store/authStore'
 import { Bars3Icon, BellIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Avatar, Button } from 'ui'
 import SearchBar from '../search/SearchBar'
-import { useAuth } from '@/hooks/useAuth'
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -10,17 +12,20 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [showMobileSearch, setShowMobileSearch] = useState(false)
-  const { user, isAuthenticated, signOut, signIn } = useAuth()
+  const { user, isAuthenticated, signOut } = useAuth()
+  const { openLoginModal, openRegisterModal } = useAuthStore()
+  const navigate = useNavigate()
 
   const hasNotifications = true
 
-  // 임시 로그인 함수 (테스트용)
-  const handleTestLogin = async () => {
-    try {
-      await signIn('test@example.com', 'password123')
-    } catch (error) {
-      console.error('Login failed:', error)
+  // 새 플레이리스트 생성 핸들러 (로그인 체크 포함)
+  const handleCreatePlaylist = () => {
+    if (!isAuthenticated) {
+      openLoginModal()
+      return
     }
+    // TODO: 플레이리스트 생성 모달 또는 페이지로 이동
+    console.log('Create playlist clicked')
   }
 
   // Close mobile search when screen becomes desktop size
@@ -99,7 +104,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 <p className="text-sm font-medium text-gray-900">{user.nickname}</p>
                 <p className="text-xs text-gray-500">온라인</p>
               </div>
-              
+
               {/* User avatar with menu */}
               <div className="relative group">
                 <Avatar
@@ -109,7 +114,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   showOnline={true}
                   onClick={() => console.log('User menu clicked')}
                 />
-                
+
                 {/* Dropdown menu (hidden for now) */}
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                   <div className="py-1">
@@ -137,24 +142,37 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               </div>
 
               {/* Create playlist button */}
-              <Button variant="primary" size="sm">
+              <Button 
+                variant="primary" 
+                size="sm"
+                onClick={handleCreatePlaylist}
+              >
                 새 플레이리스트
               </Button>
             </div>
           ) : (
-            // Login button for unauthenticated users
+            // Non-authenticated user section
             <div className="flex items-center space-x-2">
+              {/* Create playlist button for non-authenticated users */}
+              <Button 
+                variant="primary" 
+                size="sm"
+                onClick={handleCreatePlaylist}
+              >
+                새 플레이리스트
+              </Button>
+              
               <Button 
                 variant="outline" 
-                size="sm"
-                onClick={() => console.log('Sign up clicked')}
+                size="sm" 
+                onClick={openRegisterModal}
               >
                 회원가입
               </Button>
               <Button 
-                variant="primary" 
-                size="sm"
-                onClick={handleTestLogin}
+                variant="outline" 
+                size="sm" 
+                onClick={openLoginModal}
               >
                 로그인
               </Button>
