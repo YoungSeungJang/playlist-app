@@ -1,8 +1,11 @@
 import { MagnifyingGlassIcon, PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { SimpleTrack } from 'shared'
 import SearchNavigation from '../components/search/SearchNavigation'
+import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal'
+import { useAddToPlaylist } from '@/hooks/useAddToPlaylist'
+import { usePlaylistStore } from '@/store/playlistStore'
 
 const TracksPage: React.FC = () => {
   const { query } = useParams<{ query: string }>()
@@ -10,6 +13,17 @@ const TracksPage: React.FC = () => {
 
   const [tracks, setTracks] = useState<SimpleTrack[]>([])
   const [isSearching, setIsSearching] = useState(false)
+
+  // 플레이리스트 추가 훅과 store
+  const {
+    showPlaylistModal,
+    selectedTrack,
+    isAddingTrack,
+    handleAddToPlaylist,
+    handlePlaylistSelect,
+    handleCloseModal,
+  } = useAddToPlaylist()
+  const { loadPlaylists } = usePlaylistStore()
 
   // 검색 API 호출 (트랙만, URL 쿼리로 즉시 검색)
   useEffect(() => {
@@ -27,7 +41,6 @@ const TracksPage: React.FC = () => {
         if (!response.ok) {
           throw new Error(`API Error: ${response.status}`)
         }
-
         const data = await response.json()
         setTracks(data.tracks || [])
       } catch (error) {
@@ -41,10 +54,10 @@ const TracksPage: React.FC = () => {
     performSearch()
   }, [query])
 
-  const handleAddToPlaylist = (track: SimpleTrack) => {
-    console.log('Adding track to playlist:', track.title)
-    // TODO: 플레이리스트 추가 기능 구현
-  }
+  // 컴포넌트 마운트 시 플레이리스트 목록 로드
+  useEffect(() => {
+    loadPlaylists()
+  }, [])
 
   const handlePlayPreview = (track: SimpleTrack) => {
     if (track.preview_url) {
@@ -192,6 +205,15 @@ const TracksPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* 플레이리스트 선택 모달 */}
+      <AddToPlaylistModal
+        isOpen={showPlaylistModal}
+        onClose={handleCloseModal}
+        selectedTrack={selectedTrack}
+        onPlaylistSelect={handlePlaylistSelect}
+        isAddingTrack={isAddingTrack}
+      />
     </div>
   )
 }
