@@ -10,14 +10,21 @@ import ArtistsPage from '../pages/ArtistsPage'
 import AlbumsPage from '../pages/AlbumsPage'
 import ArtistDetailPage from '../pages/ArtistDetailPage'
 import AlbumDetailPage from '../pages/AlbumDetailPage'
+import ProtectedRoute from '../components/auth/ProtectedRoute'
 
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      
+      {/* Public app routes - 로그인 없이 탐색 가능 */}
       <Route path="/" element={<Home />} />
-      <Route path="/playlists" element={<PlaylistList />} />
-      <Route path="/shared" element={<SharedPlaylists />} />
       <Route path="/playlist/:id" element={<PlaylistDetail />} />
+      
+      {/* Protected routes - 로그인 필요 */}
+      <Route path="/playlists" element={<ProtectedRoute><PlaylistList /></ProtectedRoute>} />
+      <Route path="/shared" element={<ProtectedRoute><SharedPlaylists /></ProtectedRoute>} />
+      
+      {/* Search routes - 로그인 없이도 접근 가능 */}
       <Route path="/search/:query" element={<SearchPage />} />
       <Route path="/search/:query/tracks" element={<TracksPage />} />
       <Route path="/search/:query/artists" element={<ArtistsPage />} />
