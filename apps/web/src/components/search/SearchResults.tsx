@@ -1,9 +1,12 @@
-import { MusicalNoteIcon, PlayIcon, UserIcon } from '@heroicons/react/24/outline'
-import React from 'react'
+import { MusicalNoteIcon, PlayIcon, UserIcon, PlusIcon } from '@heroicons/react/24/outline'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SearchData, SimpleAlbum, SimpleArtist, SimpleTrack } from 'shared'
 import TrackItem from '../track/TrackItem'
 import AlbumItem from '../track/AlbumItem'
+import AddToPlaylistModal from '../playlist/AddToPlaylistModal'
+import { useAddToPlaylist } from '@/hooks/useAddToPlaylist'
+import { usePlaylistStore } from '@/store/playlistStore'
 
 // 타입 별칭 (기존 코드와의 호환성을 위해)
 type Track = SimpleTrack
@@ -27,10 +30,21 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
   const { tracks, artists, albums, topResult } = searchData
   const navigate = useNavigate()
 
-  const handleAddToPlaylist = (track: Track) => {
-    console.log('Add to playlist:', track)
-    // TODO: 실제 플레이리스트 추가 로직
-  }
+  // 플레이리스트 추가 훅과 store
+  const {
+    showPlaylistModal,
+    selectedTrack,
+    isAddingTrack,
+    handleAddToPlaylist,
+    handlePlaylistSelect,
+    handleCloseModal,
+  } = useAddToPlaylist()
+  const { loadAllPlaylists } = usePlaylistStore()
+
+  // 컴포넌트 마운트 시 플레이리스트 목록 로드 (소유+공유 모두)
+  useEffect(() => {
+    loadAllPlaylists()
+  }, [])
 
   const handlePlayPreview = (track: Track) => {
     console.log('Play preview:', track)
@@ -107,6 +121,17 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
                         ) : (
                           <MusicalNoteIcon className="w-16 h-16 text-white" />
                         )}
+                        {/* + 버튼을 우측 상단으로 이동 */}
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleAddToPlaylist(topResult.item as Track)
+                          }}
+                          className="absolute -top-2 -right-2 w-8 h-8 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center shadow-lg transition-colors border border-gray-200"
+                          title="플레이리스트에 추가"
+                        >
+                          <PlusIcon className="w-4 h-4 text-gray-600" />
+                        </button>
                         {(topResult.item as Track).preview_url && (
                           <button
                             onClick={() => handlePlayPreview(topResult.item as Track)}
@@ -239,6 +264,15 @@ const SearchResults: React.FC<SearchResultsProps> = ({ searchData }) => {
           </div>
         </section>
       )}
+
+      {/* 플레이리스트 선택 모달 */}
+      <AddToPlaylistModal
+        isOpen={showPlaylistModal}
+        onClose={handleCloseModal}
+        selectedTrack={selectedTrack}
+        onPlaylistSelect={handlePlaylistSelect}
+        isAddingTrack={isAddingTrack}
+      />
     </div>
   )
 }
