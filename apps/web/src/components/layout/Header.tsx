@@ -1,9 +1,11 @@
 import { useAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
-import { Bars3Icon, BellIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { usePlaylistStore } from '@/store/playlistStore'
+import { Bars3Icon, BellIcon, MagnifyingGlassIcon, UserPlusIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, Button } from 'ui'
+import JoinPlaylistModal from '../playlist/JoinPlaylistModal'
 import SearchBar from '../search/SearchBar'
 
 interface HeaderProps {
@@ -12,8 +14,10 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [showMobileSearch, setShowMobileSearch] = useState(false)
+  const [showJoinModal, setShowJoinModal] = useState(false)
   const { user, isAuthenticated, signOut } = useAuth()
   const { openLoginModal, openRegisterModal } = useAuthStore()
+  const { loadAllPlaylists } = usePlaylistStore()
   const navigate = useNavigate()
 
   const hasNotifications = true
@@ -24,8 +28,26 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       openLoginModal()
       return
     }
-    // TODO: 플레이리스트 생성 모달 또는 페이지로 이동
-    console.log('Create playlist clicked')
+    navigate('/playlists?create=true')
+  }
+
+  // 플레이리스트 참여 핸들러
+  const handleJoinPlaylist = () => {
+    if (!isAuthenticated) {
+      openLoginModal()
+      return
+    }
+    setShowJoinModal(true)
+  }
+
+  // 플레이리스트 참여 성공 핸들러
+  const handlePlaylistJoined = async (playlistTitle: string) => {
+    setShowJoinModal(false)
+    // 성공 메시지 표시
+    alert(`"${playlistTitle}" 플레이리스트에 참여했습니다!`)
+    // 플레이리스트 목록 새로고침
+    await loadAllPlaylists()
+    console.log('Joined playlist:', playlistTitle)
   }
 
   // Close mobile search when screen becomes desktop size
@@ -141,45 +163,39 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </div>
               </div>
 
-              {/* Create playlist button */}
-              <Button 
-                variant="primary" 
-                size="sm"
-                onClick={handleCreatePlaylist}
-              >
-                새 플레이리스트
-              </Button>
+              {/* Action buttons */}
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={handleJoinPlaylist}>
+                  <UserPlusIcon className="w-4 h-4 mr-1" />
+                  코드로 참여
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleCreatePlaylist}>
+                  새 플레이리스트
+                </Button>
+              </div>
             </div>
           ) : (
             // Non-authenticated user section
             <div className="flex items-center space-x-2">
               {/* Create playlist button for non-authenticated users */}
-              <Button 
-                variant="primary" 
-                size="sm"
-                onClick={handleCreatePlaylist}
-              >
-                새 플레이리스트
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={openRegisterModal}
-              >
+
+              <Button variant="outline" size="sm" onClick={openRegisterModal}>
                 회원가입
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={openLoginModal}
-              >
+              <Button variant="outline" size="sm" onClick={openLoginModal}>
                 로그인
               </Button>
             </div>
           )}
         </div>
       </div>
+
+      {/* Join Playlist Modal */}
+      <JoinPlaylistModal
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onJoin={handlePlaylistJoined}
+      />
 
       {/* Mobile Search Slide */}
       <div

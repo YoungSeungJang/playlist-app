@@ -6,9 +6,12 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Badge } from 'ui'
+import { usePlaylistStore } from '@/store/playlistStore'
+import { getPlaylistTrackCount } from '@/lib/playlistApi'
+import { useAuth } from '@/hooks/useAuth'
 
 interface SidebarProps {
   isOpen: boolean
@@ -16,14 +19,37 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  // Mock data - 나중에 실제 데이터와 연결
-  const mockPlaylists = [
-    { id: '1', title: '내가 좋아하는 K-POP', trackCount: 42, isOnline: true },
-    { id: '2', title: '팀 프로젝트 BGM', trackCount: 18, isOnline: false },
-    { id: '3', title: '운동할 때 듣는 음악', trackCount: 25, isOnline: true },
-    { id: '4', title: '로파이 힙합 모음', trackCount: 67, isOnline: false },
-    { id: '5', title: '드라이브 뮤직', trackCount: 33, isOnline: true },
-  ]
+  const { isAuthenticated } = useAuth()
+  const { 
+    ownedPlaylists, 
+    loadOwnedPlaylists, 
+    loading: isLoading 
+  } = usePlaylistStore()
+  const [trackCounts, setTrackCounts] = useState<{ [playlistId: string]: number }>({})
+  
+  useEffect(() => {
+    // 인증된 사용자만 플레이리스트 로드
+    if (isAuthenticated) {
+      loadOwnedPlaylists()
+    }
+  }, [isAuthenticated])
+
+  // 플레이리스트가 로드되면 각 플레이리스트의 트랙 개수 조회
+  useEffect(() => {
+    const loadTrackCounts = async () => {
+      const counts: { [playlistId: string]: number } = {}
+      
+      for (const playlist of ownedPlaylists) {
+        counts[playlist.id] = await getPlaylistTrackCount(playlist.id)
+      }
+      
+      setTrackCounts(counts)
+    }
+
+    if (ownedPlaylists.length > 0) {
+      loadTrackCounts()
+    }
+  }, [ownedPlaylists])
 
   const navigation = [
     { name: '홈', href: '/', icon: HomeIcon },
@@ -48,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     </NavLink>
   )
 
-  const PlaylistItem = ({ playlist }: { playlist: (typeof mockPlaylists)[0] }) => (
+  const PlaylistItem = ({ playlist }: { playlist: { id: string; title: string; trackCount?: number } }) => (
     <NavLink
       to={`/playlist/${playlist.id}`}
       className={({ isActive }) =>
@@ -61,16 +87,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       }
     >
       <div className="flex items-center min-w-0">
-        <div
-          className={clsx(
-            'w-2 h-2 rounded-full mr-3 flex-shrink-0',
-            playlist.isOnline ? 'bg-green-500' : 'bg-gray-300'
-          )}
-        />
+        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0 bg-gray-300" />
         <span className="truncate">{playlist.title}</span>
       </div>
       <Badge variant="default" size="sm">
-        {playlist.trackCount}
+        {playlist.trackCount || 0}
       </Badge>
     </NavLink>
   )
@@ -112,28 +133,54 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     내 플레이리스트
                   </h2>
-                  <button
-                    type="button"
-                    className="p-1 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-                    title="새 플레이리스트 만들기"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                  </button>
+                  {isAuthenticated && (
+                    <button
+                      type="button"
+                      className="p-1 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+                      title="새 플레이리스트 만들기"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 
               <nav className="px-4 space-y-1">
-                {mockPlaylists.map(playlist => (
-                  <PlaylistItem key={playlist.id} playlist={playlist} />
-                ))}
+                {!isAuthenticated ? (
+                  <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                    로그인이 필요합니다
+                  </div>
+                ) : isLoading ? (
+                  <div className="px-3 py-2 text-sm text-gray-500">플레이리스트 로딩 중...</div>
+                ) : (
+                  <div className="space-y-1">
+                    {ownedPlaylists.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-gray-500">만든 플레이리스트가 없습니다</div>
+                    ) : (
+                      ownedPlaylists.map(playlist => (
+                        <PlaylistItem 
+                          key={playlist.id} 
+                          playlist={{
+                            id: playlist.id,
+                            title: playlist.title,
+                            trackCount: trackCounts[playlist.id] || 0
+                          }} 
+                        />
+                      ))
+                    )}
+                  </div>
+                )}
               </nav>
             </div>
 
             {/* Bottom section */}
             <div className="border-t border-gray-200 p-4 mt-auto">
-              <div className="text-xs text-gray-500 space-y-1">
-                <p>총 {mockPlaylists.length}개 플레이리스트</p>
-                <p>{mockPlaylists.filter(p => p.isOnline).length}개 실시간 협업 중</p>
+              <div className="text-xs text-gray-500">
+                {isAuthenticated ? (
+                  <p>내가 만든 {ownedPlaylists.length}개 플레이리스트</p>
+                ) : (
+                  <p>로그인 후 플레이리스트를 이용하세요</p>
+                )}
               </div>
             </div>
           </div>
