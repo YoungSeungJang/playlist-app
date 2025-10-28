@@ -723,16 +723,6 @@ export async function getRecentTrackActivities(limit: number = 10): Promise<any[
   }
 }
 
-// 사용자가 접근 가능한 플레이리스트 ID 목록 조회 (멤버로 참여한 것들)
-async function getUserAccessiblePlaylistIds(userId: string): Promise<string[]> {
-  const { data } = await supabase
-    .from('playlist_members')
-    .select('playlist_id')
-    .eq('user_id', userId)
-
-  return data?.map(item => item.playlist_id) || []
-}
-
 // 플레이리스트 업데이트
 export async function updatePlaylist(
   playlistId: string,

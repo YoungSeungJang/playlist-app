@@ -53,7 +53,6 @@ const PlaylistList: React.FC = () => {
   }
 
   const PlaylistCard = ({ playlist }: { playlist: any }) => {
-    const updatedAt = new Date(playlist.updated_at)
     const timeAgo = getTimeAgo(playlist.updated_at)
     const trackCount = 0 // 추후 개별 쿼리로 조회
 

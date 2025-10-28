@@ -12,7 +12,7 @@ export const useAddTrackToPlaylist = () => {
 
   return useMutation({
     mutationFn: (data: AddTrackRequest) => addTrackToPlaylist(data),
-    onSuccess: (newTrack: PlaylistTrack, variables) => {
+    onSuccess: (_: PlaylistTrack, variables) => {
       const { playlistId } = variables
 
       // 해당 플레이리스트 트랙 목록 업데이트
@@ -39,7 +39,7 @@ export const useRemoveTrackFromPlaylist = () => {
 
   return useMutation({
     mutationFn: (trackId: string) => removeTrackFromPlaylist(trackId),
-    onSuccess: (_, trackId, context: any) => {
+    onSuccess: (_, __, context: any) => {
       // context에서 playlistId를 가져와야 하므로,
       // 이 정보를 mutation 호출 시 제공해야 합니다.
       const playlistId = context?.playlistId
@@ -109,7 +109,7 @@ export const useOptimisticAddTrack = () => {
       return { previousTracks }
     },
     // 성공 시 실제 데이터로 교체
-    onSuccess: (newTrack, variables) => {
+    onSuccess: (_, variables) => {
       const { playlistId } = variables
 
       // 실제 트랙 데이터로 업데이트
@@ -139,7 +139,7 @@ export const useOptimisticRemoveTrack = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ trackId, playlistId }: { trackId: string; playlistId: string }) => {
+    mutationFn: ({ trackId }: { trackId: string; playlistId: string }) => {
       return removeTrackFromPlaylist(trackId)
     },
     // 뮤테이션 실행 전 (낙관적 업데이트)
