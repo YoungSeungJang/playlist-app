@@ -1,9 +1,5 @@
+import { useAllUserPlaylists, useRecentTrackActivities } from '@/hooks/queries/usePlaylistQueries'
 import { useAuth } from '@/hooks/useAuth'
-import {
-  useAllUserPlaylists,
-  useRecentTrackActivities,
-  usePlaylistTrackCount,
-} from '@/hooks/queries/usePlaylistQueries'
 import {
   FolderIcon,
   LightBulbIcon,

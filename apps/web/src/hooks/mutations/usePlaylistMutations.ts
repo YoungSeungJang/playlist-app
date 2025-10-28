@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   createPlaylist,
-  updatePlaylist,
   deletePlaylist,
   joinPlaylistByCode,
   leavePlaylist,
   removeMember,
+  updatePlaylist,
   type CreatePlaylistRequest,
   type Playlist,
 } from '../../lib/playlistApi'
@@ -14,7 +14,7 @@ import {
 export const useCreatePlaylist = () => {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<Playlist, Error, CreatePlaylistRequest>({
     mutationFn: (data: CreatePlaylistRequest) => createPlaylist(data),
     onSuccess: (newPlaylist: Playlist) => {
       // 소유한 플레이리스트 목록 업데이트
@@ -26,7 +26,7 @@ export const useCreatePlaylist = () => {
       // 최근 활동 업데이트
       queryClient.invalidateQueries(['recent-activities'])
     },
-    onError: (error) => {
+    onError: error => {
       console.error('플레이리스트 생성 실패:', error)
     },
   })
@@ -49,7 +49,7 @@ export const useUpdatePlaylist = () => {
       // 최근 활동 업데이트
       queryClient.invalidateQueries(['recent-activities'])
     },
-    onError: (error) => {
+    onError: error => {
       console.error('플레이리스트 수정 실패:', error)
     },
   })
@@ -74,7 +74,7 @@ export const useDeletePlaylist = () => {
       // 최근 활동 업데이트
       queryClient.invalidateQueries(['recent-activities'])
     },
-    onError: (error) => {
+    onError: error => {
       console.error('플레이리스트 삭제 실패:', error)
     },
   })
@@ -99,7 +99,7 @@ export const useJoinPlaylistByCode = () => {
       // 최근 활동 업데이트
       queryClient.invalidateQueries(['recent-activities'])
     },
-    onError: (error) => {
+    onError: error => {
       console.error('플레이리스트 참여 실패:', error)
     },
   })
@@ -124,7 +124,7 @@ export const useLeavePlaylist = () => {
       // 최근 활동 업데이트
       queryClient.invalidateQueries(['recent-activities'])
     },
-    onError: (error) => {
+    onError: error => {
       console.error('플레이리스트 탈퇴 실패:', error)
     },
   })
@@ -144,7 +144,7 @@ export const useRemoveMember = () => {
       // 최근 활동 업데이트
       queryClient.invalidateQueries(['recent-activities'])
     },
-    onError: (error) => {
+    onError: error => {
       console.error('멤버 제거 실패:', error)
     },
   })

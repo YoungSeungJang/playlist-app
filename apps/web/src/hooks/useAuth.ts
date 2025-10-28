@@ -1,13 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { useEffect } from 'react'
-import { User } from 'shared'
 
 export const useAuth = () => {
   const { user, token, isAuthenticated, isLoading, login, logout, setUser, setLoading } =
     useAuthStore()
-
-
 
   // 로그인 함수
   const signIn = async (email: string, password: string) => {

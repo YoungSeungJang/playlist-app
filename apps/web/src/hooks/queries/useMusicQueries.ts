@@ -1,16 +1,12 @@
-import React from 'react'
 import { useQuery } from '@tanstack/react-query'
+import React from 'react'
 import {
-  searchMusic,
-  searchByType,
-  getTrackById,
-  getTracksByIds,
   getAlbumDetail,
   getArtistDetail,
-  type SearchResult,
-  type SpotifyTrack,
-  type AlbumDetail,
-  type ArtistDetail,
+  getTrackById,
+  getTracksByIds,
+  searchByType,
+  searchMusic,
 } from '../../lib/musicApi'
 
 // 통합 음악 검색 (tracks, artists, albums 모두)
@@ -102,11 +98,7 @@ export const useArtistDetail = (artistId: string) => {
 }
 
 // 디바운스된 검색 훅 (실시간 검색용)
-export const useDebouncedSearch = (
-  query: string,
-  delay: number = 500,
-  limit: number = 20
-) => {
+export const useDebouncedSearch = (query: string, delay: number = 500, limit: number = 20) => {
   // 간단한 디바운스 로직
   const [debouncedQuery, setDebouncedQuery] = React.useState('')
 
@@ -120,4 +112,3 @@ export const useDebouncedSearch = (
 
   return useSearchMusic(debouncedQuery, limit)
 }
-

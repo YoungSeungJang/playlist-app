@@ -1,15 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-  getUserOwnedPlaylists,
-  getUserJoinedPlaylists,
   getPlaylistById,
-  getPlaylistTracks,
-  getPlaylistTrackCount,
   getPlaylistMembers,
+  getPlaylistTrackCount,
+  getPlaylistTracks,
   getRecentTrackActivities,
-  type Playlist,
-  type PlaylistTrack,
-  type PlaylistMember,
+  getUserJoinedPlaylists,
+  getUserOwnedPlaylists,
 } from '../../lib/playlistApi'
 
 // 사용자가 소유한 플레이리스트 목록 조회

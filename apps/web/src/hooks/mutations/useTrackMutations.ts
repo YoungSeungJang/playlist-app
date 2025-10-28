@@ -27,7 +27,7 @@ export const useAddTrackToPlaylist = () => {
       // 최근 활동 업데이트
       queryClient.invalidateQueries(['recent-activities'])
     },
-    onError: (error) => {
+    onError: error => {
       console.error('트랙 추가 실패:', error)
     },
   })
@@ -58,7 +58,7 @@ export const useRemoveTrackFromPlaylist = () => {
       // 최근 활동 업데이트
       queryClient.invalidateQueries(['recent-activities'])
     },
-    onError: (error) => {
+    onError: error => {
       console.error('트랙 제거 실패:', error)
     },
   })
@@ -71,7 +71,7 @@ export const useOptimisticAddTrack = () => {
   return useMutation({
     mutationFn: (data: AddTrackRequest) => addTrackToPlaylist(data),
     // 뮤테이션 실행 전 (낙관적 업데이트)
-    onMutate: async (variables) => {
+    onMutate: async variables => {
       const { playlistId } = variables
 
       // 진행 중인 쿼리들 취소
@@ -99,10 +99,10 @@ export const useOptimisticAddTrack = () => {
           added_at: new Date().toISOString(),
         }
 
-        queryClient.setQueryData(['playlist-tracks', playlistId], (old: PlaylistTrack[]) => [
-          ...old,
-          tempTrack,
-        ])
+        queryClient.setQueryData(
+          ['playlist-tracks', playlistId],
+          (old: PlaylistTrack[] | undefined) => [...(old || []), tempTrack]
+        )
       }
 
       // 이전 데이터 반환 (실패 시 복원용)
@@ -152,8 +152,9 @@ export const useOptimisticRemoveTrack = () => {
 
       // 낙관적으로 트랙 제거
       if (previousTracks) {
-        queryClient.setQueryData(['playlist-tracks', playlistId], (old: PlaylistTrack[]) =>
-          old.filter((track) => track.id !== trackId)
+        queryClient.setQueryData(
+          ['playlist-tracks', playlistId],
+          (old: PlaylistTrack[] | undefined) => (old || []).filter(track => track.id !== trackId)
         )
       }
 
