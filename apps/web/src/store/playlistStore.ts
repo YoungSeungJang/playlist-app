@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { 
   createPlaylist as apiCreatePlaylist, 
-  getUserPlaylists, 
+  getUserOwnedPlaylists,
+  getUserJoinedPlaylists,
   deletePlaylist as apiDeletePlaylist,
   type Playlist, 
   type CreatePlaylistRequest 
@@ -9,37 +10,87 @@ import {
 
 interface PlaylistState {
   // State
-  playlists: Playlist[]
+  ownedPlaylists: Playlist[]
+  joinedPlaylists: Playlist[]
   loading: boolean
   error: string | null
 
   // Actions
-  loadPlaylists: () => Promise<void>
+  loadOwnedPlaylists: () => Promise<void>
+  loadJoinedPlaylists: () => Promise<void>
+  loadAllPlaylists: () => Promise<void>
   createPlaylist: (request: CreatePlaylistRequest) => Promise<Playlist>
   deletePlaylist: (id: string) => Promise<void>
   clearError: () => void
   setLoading: (loading: boolean) => void
+  
+  // Legacy - 호환성을 위해 유지
+  playlists: Playlist[]
+  loadPlaylists: () => Promise<void>
 }
 
 export const usePlaylistStore = create<PlaylistState>((set, get) => ({
   // Initial state
-  playlists: [],
+  ownedPlaylists: [],
+  joinedPlaylists: [],
   loading: false,
   error: null,
 
-  // 플레이리스트 목록 불러오기
-  loadPlaylists: async () => {
+  // 소유한 플레이리스트 목록 불러오기
+  loadOwnedPlaylists: async () => {
     try {
       set({ loading: true, error: null })
-      const playlists = await getUserPlaylists()
-      set({ playlists, loading: false })
+      const ownedPlaylists = await getUserOwnedPlaylists()
+      set({ ownedPlaylists, loading: false })
     } catch (error) {
-      console.error('Failed to load playlists:', error)
+      console.error('Failed to load owned playlists:', error)
+      set({ 
+        error: error instanceof Error ? error.message : '소유한 플레이리스트를 불러오는데 실패했습니다.',
+        loading: false 
+      })
+    }
+  },
+
+  // 참여한 플레이리스트 목록 불러오기
+  loadJoinedPlaylists: async () => {
+    try {
+      set({ loading: true, error: null })
+      const joinedPlaylists = await getUserJoinedPlaylists()
+      set({ joinedPlaylists, loading: false })
+    } catch (error) {
+      console.error('Failed to load joined playlists:', error)
+      set({ 
+        error: error instanceof Error ? error.message : '참여한 플레이리스트를 불러오는데 실패했습니다.',
+        loading: false 
+      })
+    }
+  },
+
+  // 모든 플레이리스트 불러오기 (소유 + 참여)
+  loadAllPlaylists: async () => {
+    try {
+      set({ loading: true, error: null })
+      const [ownedPlaylists, joinedPlaylists] = await Promise.all([
+        getUserOwnedPlaylists(),
+        getUserJoinedPlaylists()
+      ])
+      set({ ownedPlaylists, joinedPlaylists, loading: false })
+    } catch (error) {
+      console.error('Failed to load all playlists:', error)
       set({ 
         error: error instanceof Error ? error.message : '플레이리스트를 불러오는데 실패했습니다.',
         loading: false 
       })
     }
+  },
+
+  // Legacy - 호환성을 위해 유지 (소유한 플레이리스트만)
+  playlists: [],
+  loadPlaylists: async () => {
+    const { loadOwnedPlaylists } = get()
+    await loadOwnedPlaylists()
+    const { ownedPlaylists } = get()
+    set({ playlists: ownedPlaylists })
   },
 
   // 새 플레이리스트 생성
@@ -48,10 +99,11 @@ export const usePlaylistStore = create<PlaylistState>((set, get) => ({
       set({ loading: true, error: null })
       const newPlaylist = await apiCreatePlaylist(request)
       
-      // 새 플레이리스트를 기존 목록 맨 앞에 추가
-      const currentPlaylists = get().playlists
+      // 새 플레이리스트를 소유한 플레이리스트 목록 맨 앞에 추가
+      const { ownedPlaylists, playlists } = get()
       set({ 
-        playlists: [newPlaylist, ...currentPlaylists],
+        ownedPlaylists: [newPlaylist, ...ownedPlaylists],
+        playlists: [newPlaylist, ...playlists], // Legacy 지원
         loading: false 
       })
       
@@ -72,10 +124,12 @@ export const usePlaylistStore = create<PlaylistState>((set, get) => ({
       set({ loading: true, error: null })
       await apiDeletePlaylist(id)
       
-      // 삭제된 플레이리스트를 목록에서 제거
-      const currentPlaylists = get().playlists
+      // 삭제된 플레이리스트를 모든 목록에서 제거
+      const { ownedPlaylists, joinedPlaylists, playlists } = get()
       set({ 
-        playlists: currentPlaylists.filter(playlist => playlist.id !== id),
+        ownedPlaylists: ownedPlaylists.filter(playlist => playlist.id !== id),
+        joinedPlaylists: joinedPlaylists.filter(playlist => playlist.id !== id),
+        playlists: playlists.filter(playlist => playlist.id !== id), // Legacy 지원
         loading: false 
       })
     } catch (error) {

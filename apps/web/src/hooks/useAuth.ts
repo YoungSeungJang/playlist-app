@@ -1,41 +1,28 @@
+import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
+import { useEffect } from 'react'
 import { User } from 'shared'
 
 export const useAuth = () => {
-  const {
-    user,
-    token,
-    isAuthenticated,
-    isLoading,
-    login,
-    logout,
-    setUser,
-    setLoading,
-  } = useAuthStore()
+  const { user, token, isAuthenticated, isLoading, login, logout, setUser, setLoading } =
+    useAuthStore()
 
-  // 로그인 함수 (API 호출 포함)
-  const signIn = async (email: string, _password: string) => {
+
+
+  // 로그인 함수
+  const signIn = async (email: string, password: string) => {
     setLoading(true)
     try {
-      // TODO: 실제 API 호출로 교체
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password }),
-      // })
-      // const data = await response.json()
-      // login(data.user, data.token)
-
-      // 임시 mock 로그인
-      const mockUser: User = {
-        id: '1',
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        nickname: email.split('@')[0],
-        avatarUrl: undefined,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        password,
+      })
+
+      if (error) {
+        throw new Error(error.message)
       }
-      login(mockUser, 'mock-jwt-token')
+
+      // 로그인 성공 시 onAuthStateChange에서 자동으로 상태 업데이트됨
     } catch (error) {
       console.error('Login failed:', error)
       throw error
@@ -45,28 +32,25 @@ export const useAuth = () => {
   }
 
   // 회원가입 함수
-  const signUp = async (email: string, _password: string, nickname: string) => {
+  const signUp = async (email: string, password: string, nickname: string) => {
     setLoading(true)
     try {
-      // TODO: 실제 API 호출로 교체
-      // const response = await fetch('/api/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password, nickname }),
-      // })
-      // const data = await response.json()
-      // login(data.user, data.token)
-
-      // 임시 mock 회원가입
-      const mockUser: User = {
-        id: '1',
+      const { data, error } = await supabase.auth.signUp({
         email,
-        nickname,
-        avatarUrl: undefined,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        password,
+        options: {
+          data: {
+            nickname,
+          },
+        },
+      })
+
+      if (error) {
+        console.log(error)
+        throw new Error(error.message)
       }
-      login(mockUser, 'mock-jwt-token')
+
+      // 회원가입 성공 시 onAuthStateChange에서 자동으로 상태 업데이트됨
     } catch (error) {
       console.error('Sign up failed:', error)
       throw error
@@ -76,22 +60,33 @@ export const useAuth = () => {
   }
 
   // 로그아웃 함수
-  const signOut = () => {
-    logout()
+  const signOut = async () => {
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        throw new Error(error.message)
+      }
+      // 로그아웃 성공 시 onAuthStateChange에서 자동으로 상태 초기화됨
+    } catch (error) {
+      console.error('Sign out failed:', error)
+      // 에러가 있어도 로컬 상태는 초기화
+      logout()
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // 토큰 검증 및 사용자 정보 새로고침
+  // 토큰 새로고침 (Supabase에서 자동으로 처리됨)
   const refreshAuth = async () => {
-    if (!token) return
-
     try {
       setLoading(true)
-      // TODO: 실제 토큰 검증 API 호출
-      // const response = await fetch('/api/auth/me', {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // })
-      // const userData = await response.json()
-      // setUser(userData)
+      const { data, error } = await supabase.auth.refreshSession()
+      if (error) {
+        console.error('Auth refresh failed:', error)
+        logout()
+      }
+      // 성공 시 onAuthStateChange에서 자동으로 상태 업데이트됨
     } catch (error) {
       console.error('Auth refresh failed:', error)
       logout()

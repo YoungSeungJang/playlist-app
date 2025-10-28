@@ -1,5 +1,9 @@
 import { useAuth } from '@/hooks/useAuth'
-import { supabase } from '@/lib/supabase'
+import {
+  useAllUserPlaylists,
+  useRecentTrackActivities,
+  usePlaylistTrackCount,
+} from '@/hooks/queries/usePlaylistQueries'
 import {
   FolderIcon,
   LightBulbIcon,
@@ -8,14 +12,68 @@ import {
   ShareIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline'
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Avatar, Badge, Button, Card } from 'ui'
 
 const Home: React.FC = () => {
-  console.log(supabase)
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
+
+  // React Query 훅들 사용
+  const { data: playlistData, isLoading: playlistsLoading } = useAllUserPlaylists()
+  const { data: recentActivity = [], isLoading: activityLoading } = useRecentTrackActivities(5)
+
+  // 시간 차이 계산 함수
+  const getTimeAgo = (dateString: string): string => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+    if (diffInSeconds < 60) return '방금 전'
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}분 전`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}시간 전`
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}일 전`
+    return `${Math.floor(diffInSeconds / 2592000)}개월 전`
+  }
+
+  // 통계 데이터 계산 (useMemo로 최적화)
+  const stats = useMemo(() => {
+    if (!playlistData) {
+      return {
+        totalPlaylists: 0,
+        totalTracks: 0,
+        activeCollaborations: 0,
+        recentActivity: 0,
+      }
+    }
+
+    return {
+      totalPlaylists: playlistData.all.length,
+      totalTracks: 0, // 추후 개별 쿼리로 계산
+      activeCollaborations: playlistData.joined.length,
+      recentActivity: recentActivity.length,
+    }
+  }, [playlistData, recentActivity])
+
+  // 최근 플레이리스트 계산 (useMemo로 최적화)
+  const recentPlaylists = useMemo(() => {
+    if (!playlistData?.all) return []
+
+    return playlistData.all
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      .slice(0, 3)
+      .map(playlist => ({
+        id: playlist.id,
+        title: playlist.title,
+        trackCount: 0, // 추후 개별 쿼리로 조회
+        lastUpdated: getTimeAgo(playlist.updated_at),
+        collaborators: playlistData.owned.find(p => p.id === playlist.id) ? 1 : 2,
+      }))
+  }, [playlistData])
+
+  // 로딩 상태
+  const isLoading = playlistsLoading || activityLoading
 
   // 로그인 필요한 기능 처리
   const handleCreatePlaylist = () => {
@@ -23,8 +81,7 @@ const Home: React.FC = () => {
       navigate('/login')
       return
     }
-    // TODO: 플레이리스트 생성 모달 또는 페이지로 이동
-    console.log('Create playlist clicked')
+    navigate('/playlists?create=true')
   }
 
   // 비로그인 사용자를 위한 랜딩 페이지
@@ -79,55 +136,6 @@ const Home: React.FC = () => {
   }
 
   // 로그인 사용자를 위한 대시보드
-  // Mock data for dashboard
-  const stats = {
-    totalPlaylists: 8,
-    totalTracks: 247,
-    activeCollaborations: 3,
-    recentActivity: 12,
-  }
-
-  const recentPlaylists = [
-    {
-      id: '1',
-      title: '내가 좋아하는 K-POP',
-      trackCount: 42,
-      lastUpdated: '2시간 전',
-      collaborators: 3,
-    },
-    {
-      id: '2',
-      title: '팀 프로젝트 BGM',
-      trackCount: 18,
-      lastUpdated: '1일 전',
-      collaborators: 5,
-    },
-    {
-      id: '3',
-      title: '운동할 때 듣는 음악',
-      trackCount: 25,
-      lastUpdated: '3일 전',
-      collaborators: 1,
-    },
-  ]
-
-  const recentActivity = [
-    {
-      user: 'Alice',
-      action: 'added',
-      track: 'Dynamite - BTS',
-      playlist: 'K-POP Mix',
-      time: '10분 전',
-    },
-    {
-      user: 'Bob',
-      action: 'removed',
-      track: 'Shape of You',
-      playlist: '팀 BGM',
-      time: '30분 전',
-    },
-    { user: 'Charlie', action: 'created', playlist: '새 플레이리스트', time: '1시간 전' },
-  ]
 
   return (
     <div className="space-y-8">
@@ -220,25 +228,47 @@ const Home: React.FC = () => {
         {/* Recent Activity */}
         <Card variant="default" padding="lg">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">최근 활동</h2>
-          <div className="space-y-4">
-            {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-start space-x-3">
-                <Avatar name={activity.user} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900">
-                    <span className="font-medium">{activity.user}</span>
-                    {activity.action === 'added' && ' 님이 곡을 추가했습니다'}
-                    {activity.action === 'removed' && ' 님이 곡을 삭제했습니다'}
-                    {activity.action === 'created' && ' 님이 플레이리스트를 만들었습니다'}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {activity.track && `"${activity.track}"`}
-                    {activity.playlist && ` - ${activity.playlist}`}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+          <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-pulse space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2 mt-2"></div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            ) : recentActivity.length > 0 ? (
+              recentActivity.map((activity, index) => (
+                <div key={activity.id || index} className="flex items-start space-x-3">
+                  <Avatar name={activity.profiles?.nickname || '익명'} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900">
+                      <span className="font-medium">{activity.profiles?.nickname || '익명'}</span>
+                      {' 님이 곡을 추가했습니다'}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      "{activity.title}" - {activity.artist}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      플레이리스트: {activity.playlists?.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">{getTimeAgo(activity.created_at)}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <MusicalNoteIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">아직 활동 내역이 없습니다</p>
+                <p className="text-sm text-gray-400 mt-1">플레이리스트에 곡을 추가해보세요!</p>
+              </div>
+            )}
           </div>
         </Card>
       </div>

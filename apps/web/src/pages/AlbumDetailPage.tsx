@@ -3,6 +3,9 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { SimpleAlbum, SimpleTrack } from 'shared'
 import TrackItem from '../components/track/TrackItem'
+import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal'
+import { useAddToPlaylist } from '@/hooks/useAddToPlaylist'
+import { usePlaylistStore } from '@/store/playlistStore'
 
 // 앨범 상세 정보 타입 정의
 interface AlbumDetailData {
@@ -25,6 +28,17 @@ const AlbumDetailPage: React.FC = () => {
   const [albumData, setAlbumData] = useState<AlbumDetailData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // 플레이리스트 추가 훅과 store
+  const {
+    showPlaylistModal,
+    selectedTrack,
+    isAddingTrack,
+    handleAddToPlaylist,
+    handlePlaylistSelect,
+    handleCloseModal,
+  } = useAddToPlaylist()
+  const { loadPlaylists } = usePlaylistStore()
 
   // 앨범 상세 정보 API 호출
   useEffect(() => {
@@ -55,6 +69,11 @@ const AlbumDetailPage: React.FC = () => {
     fetchAlbumDetail()
   }, [id])
 
+  // 컴포넌트 마운트 시 플레이리스트 목록 로드
+  useEffect(() => {
+    loadPlaylists()
+  }, [])
+
   const formatReleaseDate = (dateString: string): string => {
     const date = new Date(dateString)
     return date.toLocaleDateString('ko-KR', {
@@ -69,11 +88,6 @@ const AlbumDetailPage: React.FC = () => {
       console.log('Playing preview:', track.preview_url)
       // TODO: 미리듣기 기능 구현
     }
-  }
-
-  const handleAddToPlaylist = (track: SimpleTrack) => {
-    console.log('Adding to playlist:', track.title)
-    // TODO: 플레이리스트 추가 기능 구현
   }
 
   const handleArtistClick = (artistId: string) => {
@@ -227,6 +241,15 @@ const AlbumDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 플레이리스트 선택 모달 */}
+      <AddToPlaylistModal
+        isOpen={showPlaylistModal}
+        onClose={handleCloseModal}
+        selectedTrack={selectedTrack}
+        onPlaylistSelect={handlePlaylistSelect}
+        isAddingTrack={isAddingTrack}
+      />
     </div>
   )
 }

@@ -1,5 +1,8 @@
 import AlbumItem from '@/components/track/AlbumItem'
 import TrackItem from '@/components/track/TrackItem'
+import AddToPlaylistModal from '@/components/playlist/AddToPlaylistModal'
+import { useAddToPlaylist } from '@/hooks/useAddToPlaylist'
+import { usePlaylistStore } from '@/store/playlistStore'
 import { ArrowLeftIcon, UserIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -28,6 +31,17 @@ const ArtistDetailPage: React.FC = () => {
   const [artistData, setArtistData] = useState<ArtistDetailData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // 플레이리스트 추가 훅과 store
+  const {
+    showPlaylistModal,
+    selectedTrack,
+    isAddingTrack,
+    handleAddToPlaylist,
+    handlePlaylistSelect,
+    handleCloseModal,
+  } = useAddToPlaylist()
+  const { loadPlaylists } = usePlaylistStore()
 
   // 아티스트 상세 정보 API 호출
   useEffect(() => {
@@ -58,6 +72,11 @@ const ArtistDetailPage: React.FC = () => {
     fetchArtistDetail()
   }, [id])
 
+  // 컴포넌트 마운트 시 플레이리스트 목록 로드
+  useEffect(() => {
+    loadPlaylists()
+  }, [])
+
   const formatFollowers = (followers: number): string => {
     if (followers >= 1000000) {
       return `${(followers / 1000000).toFixed(1)}M`
@@ -74,10 +93,6 @@ const ArtistDetailPage: React.FC = () => {
     }
   }
 
-  const handleAddToPlaylist = (track: any) => {
-    console.log('Adding to playlist:', track.title)
-    // TODO: 플레이리스트 추가 기능 구현
-  }
 
   const handleAlbumClick = (album: any) => {
     navigate(`/album/${album.id}`)
@@ -222,6 +237,15 @@ const ArtistDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* 플레이리스트 선택 모달 */}
+      <AddToPlaylistModal
+        isOpen={showPlaylistModal}
+        onClose={handleCloseModal}
+        selectedTrack={selectedTrack}
+        onPlaylistSelect={handlePlaylistSelect}
+        isAddingTrack={isAddingTrack}
+      />
     </div>
   )
 }

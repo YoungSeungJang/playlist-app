@@ -1,4 +1,4 @@
-import { MagnifyingGlassIcon, PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { SimpleTrack } from 'shared'
@@ -6,6 +6,7 @@ import SearchNavigation from '../components/search/SearchNavigation'
 import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal'
 import { useAddToPlaylist } from '@/hooks/useAddToPlaylist'
 import { usePlaylistStore } from '@/store/playlistStore'
+import TrackItem from '@/components/track/TrackItem'
 
 const TracksPage: React.FC = () => {
   const { query } = useParams<{ query: string }>()
@@ -111,95 +112,17 @@ const TracksPage: React.FC = () => {
 
             <div className="space-y-2">
               {tracks.map((track, index) => (
-                <div
+                <TrackItem
                   key={track.id}
-                  className="group flex items-center p-3 rounded-lg hover:bg-white transition-colors"
-                >
-                  {/* 순번 */}
-                  <div className="w-8 text-center text-gray-400 group-hover:hidden">
-                    {index + 1}
-                  </div>
-
-                  {/* 재생 버튼 (호버시 표시) */}
-                  <div className="w-8 hidden group-hover:flex justify-center">
-                    <button
-                      onClick={() => handlePlayPreview(track)}
-                      className="p-1 rounded-full hover:bg-gray-100 text-gray-600 hover:text-primary-600"
-                      disabled={!track.preview_url}
-                      title={track.preview_url ? '미리듣기' : '미리듣기 불가'}
-                    >
-                      <PlayIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {/* 앨범 이미지 */}
-                  <div className="ml-4 w-12 h-12 bg-gray-200 rounded flex-shrink-0">
-                    {track.image_url && (
-                      <img
-                        src={track.image_url}
-                        alt={track.album}
-                        className="w-full h-full object-cover rounded"
-                      />
-                    )}
-                  </div>
-
-                  {/* 트랙 정보 */}
-                  <div className="flex-1 min-w-0 ml-4">
-                    <h3 className="font-medium text-gray-900 truncate">{track.title}</h3>
-                    <div className="text-sm text-gray-500 truncate">
-                      {track.artist_names.map((artistName, index) => (
-                        <span key={track.artist_ids[index]}>
-                          <button
-                            onClick={() => handleArtistClick(track.artist_ids[index])}
-                            className="hover:text-primary-600 hover:underline cursor-pointer"
-                          >
-                            {artistName}
-                          </button>
-                          {index < track.artist_names.length - 1 && ', '}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 앨범 이름 */}
-                  <div className="hidden md:block flex-1 min-w-0 px-4">
-                    <button
-                      onClick={() => handleAlbumClick(track.album_id)}
-                      className="text-sm text-gray-500 truncate hover:text-primary-600 hover:underline cursor-pointer text-left"
-                    >
-                      {track.album}
-                    </button>
-                  </div>
-
-                  {/* 인기도 */}
-                  <div className="hidden lg:block w-20 text-center">
-                    <div className="inline-flex items-center">
-                      <div className="w-12 bg-gray-200 rounded-full h-1 mr-2">
-                        <div
-                          className="bg-primary-500 h-1 rounded-full transition-all"
-                          style={{ width: `${track.popularity}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500">{track.popularity}</span>
-                    </div>
-                  </div>
-
-                  {/* 재생 시간 */}
-                  <div className="hidden sm:block w-16 text-right text-sm text-gray-500">
-                    {track.duration}
-                  </div>
-
-                  {/* 추가 버튼 */}
-                  <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleAddToPlaylist(track)}
-                      className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-primary-600"
-                      title="플레이리스트에 추가"
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
+                  track={track}
+                  index={index}
+                  showAlbum={true}
+                  showIndex={true}
+                  onPlay={handlePlayPreview}
+                  onAdd={handleAddToPlaylist}
+                  onArtistClick={handleArtistClick}
+                  onAlbumClick={handleAlbumClick}
+                />
               ))}
             </div>
           </div>

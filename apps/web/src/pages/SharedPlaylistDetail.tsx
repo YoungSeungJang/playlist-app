@@ -1,38 +1,32 @@
-import EditPlaylistModal from '@/components/playlist/EditPlaylistModal'
-import TrackItem from '@/components/track/TrackItem'
 import {
-  getPlaylistById,
-  getPlaylistTracks,
-  removeTrackFromPlaylist,
-  type Playlist,
-  type PlaylistTrack,
-} from '@/lib/playlistApi'
+  ArrowLeftIcon,
+  MusicalNoteIcon,
+  UserMinusIcon,
+} from '@heroicons/react/24/outline'
+import React, { useState, useEffect } from 'react'
+import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Button, Card, Avatar } from 'ui'
+import { getPlaylistById, getPlaylistTracks, removeTrackFromPlaylist, leavePlaylist, type Playlist, type PlaylistTrack } from '@/lib/playlistApi'
 import { supabase } from '@/lib/supabase'
-import { ArrowLeftIcon, MusicalNoteIcon, PencilIcon } from '@heroicons/react/24/outline'
-import React, { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import TrackItem from '@/components/track/TrackItem'
 import { SimpleTrack } from 'shared'
-import { Button, Card } from 'ui'
 
-const PlaylistDetail: React.FC = () => {
+const SharedPlaylistDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-
+  
   // API 연결을 위한 상태
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [tracks, setTracks] = useState<PlaylistTrack[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [showEditModal, setShowEditModal] = useState(false)
 
   // 현재 사용자 정보 로드
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
+        const { data: { user } } = await supabase.auth.getUser()
         setCurrentUserId(user?.id || null)
       } catch (error) {
         console.error('Failed to get current user:', error)
@@ -54,7 +48,7 @@ const PlaylistDetail: React.FC = () => {
         // 플레이리스트 기본 정보와 트랙 목록을 병렬로 조회
         const [playlistData, tracksData] = await Promise.all([
           getPlaylistById(id),
-          getPlaylistTracks(id),
+          getPlaylistTracks(id)
         ])
 
         if (!playlistData) {
@@ -62,7 +56,36 @@ const PlaylistDetail: React.FC = () => {
           return
         }
 
-        setPlaylist(playlistData)
+        // 소유자 정보 조회 (profiles 테이블에서)
+        const { data: ownerData } = await supabase
+          .from('profiles')
+          .select('nickname')
+          .eq('id', playlistData.created_by)
+          .single()
+
+        // 현재 사용자의 참여일 조회 (playlist_members 테이블에서)
+        const { data: { user } } = await supabase.auth.getUser()
+        let joinedAt = null
+        
+        if (user) {
+          const { data: memberData } = await supabase
+            .from('playlist_members')
+            .select('joined_at')
+            .eq('playlist_id', playlistData.id)
+            .eq('user_id', user.id)
+            .single()
+          
+          joinedAt = memberData?.joined_at || null
+        }
+
+        // 플레이리스트 데이터에 소유자 이름과 참여일 추가
+        const playlistWithOwner = {
+          ...playlistData,
+          ownerName: ownerData?.nickname || '알 수 없음',
+          joined_at: joinedAt
+        }
+
+        setPlaylist(playlistWithOwner)
         setTracks(tracksData)
       } catch (err) {
         console.error('Failed to load playlist data:', err)
@@ -75,8 +98,8 @@ const PlaylistDetail: React.FC = () => {
     loadPlaylistData()
   }, [id])
 
-  // 현재 사용자가 편집 권한이 있는지 확인 (현재는 소유자만 편집 가능)
-  const canEdit = playlist && currentUserId && playlist.created_by === currentUserId
+  // 현재 사용자는 멤버이므로 편집 권한 없음 (소유자가 아니므로)
+  const canEdit = false
 
   // 총 재생시간 계산 함수
   const calculateTotalDuration = (tracks: PlaylistTrack[]): string => {
@@ -84,7 +107,7 @@ const PlaylistDetail: React.FC = () => {
     const totalMinutes = Math.floor(totalMs / 60000)
     const hours = Math.floor(totalMinutes / 60)
     const minutes = totalMinutes % 60
-
+    
     if (hours > 0) {
       return `${hours}시간 ${minutes}분`
     }
@@ -142,7 +165,7 @@ const PlaylistDetail: React.FC = () => {
     const date = new Date(dateString)
     const now = new Date()
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
+    
     if (diffInSeconds < 60) return '방금 전'
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}분 전`
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}시간 전`
@@ -150,26 +173,21 @@ const PlaylistDetail: React.FC = () => {
     return `${Math.floor(diffInSeconds / 2592000)}개월 전`
   }
 
-  const handleRemoveTrack = async (simpleTrack: SimpleTrack) => {
-    if (!confirm('이 곡을 플레이리스트에서 제거하시겠습니까?')) {
-      return
-    }
-
-    // SimpleTrack의 id는 spotify_track_id이므로, 실제 playlist_tracks 테이블의 id를 찾아야 함
-    const playlistTrack = tracks.find(track => track.spotify_track_id === simpleTrack.id)
-    if (!playlistTrack) {
-      alert('트랙을 찾을 수 없습니다.')
+  // 플레이리스트 나가기 기능
+  const handleLeavePlaylist = async () => {
+    if (!confirm('이 플레이리스트에서 나가시겠습니까? 다시 참여하려면 초대 코드가 필요합니다.')) {
       return
     }
 
     try {
-      await removeTrackFromPlaylist(playlistTrack.id)
-      // 트랙 목록에서 제거
-      setTracks(prev => prev.filter(track => track.id !== playlistTrack.id))
-      alert('곡이 제거되었습니다.')
+      if (!id) return
+
+      await leavePlaylist(id)
+      alert('플레이리스트에서 나갔습니다.')
+      navigate('/shared')
     } catch (error) {
-      console.error('Failed to remove track:', error)
-      alert('곡 제거에 실패했습니다.')
+      console.error('Failed to leave playlist:', error)
+      alert('플레이리스트 나가기에 실패했습니다.')
     }
   }
 
@@ -186,10 +204,6 @@ const PlaylistDetail: React.FC = () => {
       console.log('Playing preview:', track.preview_url)
       // TODO: 미리듣기 기능 구현
     }
-  }
-
-  const handlePlaylistUpdated = (updatedPlaylist: Playlist) => {
-    setPlaylist(updatedPlaylist)
   }
 
   // 로딩 상태
@@ -212,10 +226,10 @@ const PlaylistDetail: React.FC = () => {
           <h3 className="text-xl font-medium text-gray-900 mb-2">오류가 발생했습니다</h3>
           <p className="text-gray-500 mb-4">{error}</p>
           <Link
-            to="/playlists"
+            to="/shared"
             className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
           >
-            플레이리스트 목록으로 돌아가기
+            공유받은 플레이리스트로 돌아가기
           </Link>
         </div>
       </div>
@@ -227,14 +241,12 @@ const PlaylistDetail: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h3 className="text-xl font-medium text-gray-900 mb-2">
-            플레이리스트를 찾을 수 없습니다
-          </h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">플레이리스트를 찾을 수 없습니다</h3>
           <Link
-            to="/playlists"
+            to="/shared"
             className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
           >
-            플레이리스트 목록으로 돌아가기
+            공유받은 플레이리스트로 돌아가기
           </Link>
         </div>
       </div>
@@ -245,45 +257,55 @@ const PlaylistDetail: React.FC = () => {
     <div className="space-y-6">
       {/* Back button */}
       <Link
-        to="/playlists"
+        to="/shared"
         className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
       >
         <ArrowLeftIcon className="w-5 h-5 mr-2" />
-        플레이리스트로 돌아가기
+        공유받은 플레이리스트로 돌아가기
       </Link>
 
       {/* Playlist Header */}
       <Card variant="default" padding="lg">
         <div className="flex items-start space-x-6">
-          {/* Playlist thumbnail */}
-          <div className="w-48 h-48 bg-gradient-to-br from-purple-400 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+          {/* Playlist thumbnail - 공유받은 플레이리스트는 다른 색상 */}
+          <div className="w-48 h-48 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0">
             <MusicalNoteIcon className="w-16 h-16 text-white" />
           </div>
 
           {/* Playlist info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-3 mb-2">
-              <span className="text-sm text-gray-500">플레이리스트</span>
+              <span className="text-sm text-green-600 font-medium">공유받은 플레이리스트</span>
             </div>
 
             <h1 className="text-4xl font-bold text-gray-900 mb-4">{playlist.title}</h1>
-            <p className="text-gray-600 mb-6 max-w-2xl">초대 코드: {playlist.invite_code}</p>
+            
+            {/* 소유자 정보 표시 */}
+            <div className="flex items-center space-x-2 mb-4">
+              <Avatar name={playlist.ownerName || '알 수 없음'} size="sm" />
+              <span className="text-lg text-gray-700">
+                by <span className="font-semibold">{playlist.ownerName || '알 수 없음'}</span>
+              </span>
+            </div>
 
             <div className="flex items-center space-x-6 text-sm text-gray-500 mb-6">
               <span>{tracks.length}곡</span>
               <span>{calculateTotalDuration(tracks)}</span>
-              <span>생성일: {getTimeAgo(playlist.created_at)}</span>
+              <span>참여일: {playlist.joined_at ? getTimeAgo(playlist.joined_at) : '알 수 없음'}</span>
             </div>
 
-            {/* Action buttons */}
-            {canEdit && (
-              <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="lg" onClick={() => setShowEditModal(true)}>
-                  <PencilIcon className="w-5 h-5 mr-2" />
-                  편집
-                </Button>
-              </div>
-            )}
+            {/* Action buttons - 나가기 버튼 */}
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                size="lg"
+                onClick={handleLeavePlaylist}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <UserMinusIcon className="w-5 h-5 mr-2" />
+                플레이리스트 나가기
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
@@ -291,6 +313,7 @@ const PlaylistDetail: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main content */}
         <div className="lg:col-span-3 space-y-6">
+
           {/* Tracks list */}
           <Card variant="default" padding="none">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -305,19 +328,20 @@ const PlaylistDetail: React.FC = () => {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     아직 추가된 곡이 없습니다
                   </h3>
-                  <p className="text-gray-500 mb-4">플레이리스트가 비어있습니다.</p>
+                  <p className="text-gray-500 mb-4">
+                    플레이리스트가 비어있습니다.
+                  </p>
                 </div>
               ) : (
                 tracks.map((track, index) => (
-                  <TrackItem
-                    key={track.id}
-                    track={convertToSimpleTrack(track)}
+                  <TrackItem 
+                    key={track.id} 
+                    track={convertToSimpleTrack(track)} 
                     index={index}
                     showAlbum={true}
                     showIndex={true}
-                    showRemove={!!canEdit}
+                    showRemove={false} // 공유받은 플레이리스트는 곡 제거 불가
                     onPlay={handlePlayPreview}
-                    onRemove={handleRemoveTrack}
                     onArtistClick={handleArtistClick}
                     onAlbumClick={handleAlbumClick}
                   />
@@ -342,44 +366,32 @@ const PlaylistDetail: React.FC = () => {
                 <span className="font-medium">{calculateTotalDuration(tracks)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">생성일</span>
-                <span className="font-medium">{getTimeAgo(playlist.created_at)}</span>
+                <span className="text-gray-500">참여일</span>
+                <span className="font-medium">{playlist.joined_at ? getTimeAgo(playlist.joined_at) : '알 수 없음'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">최종 수정</span>
+                <span className="text-gray-500">최종 업데이트</span>
                 <span className="font-medium">{getTimeAgo(playlist.updated_at)}</span>
               </div>
             </div>
           </Card>
 
-          {/* 초대 코드 */}
+          {/* 소유자 정보 */}
           <Card variant="default" padding="lg">
-            <h3 className="font-semibold text-gray-900 mb-4">초대 코드</h3>
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-lg font-bold text-gray-900">
-                  {playlist.invite_code}
-                </span>
+            <h3 className="font-semibold text-gray-900 mb-4">소유자</h3>
+            <div className="flex items-center space-x-3">
+              <Avatar name={playlist.ownerName || '알 수 없음'} size="md" />
+              <div>
+                <p className="font-medium text-gray-900">{playlist.ownerName || '알 수 없음'}</p>
+                <p className="text-sm text-gray-500">플레이리스트 관리자</p>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                이 코드를 공유하여 다른 사용자를 초대할 수 있습니다
-              </p>
             </div>
           </Card>
         </div>
       </div>
 
-      {/* Edit Playlist Modal */}
-      {playlist && (
-        <EditPlaylistModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          playlist={playlist}
-          onPlaylistUpdated={handlePlaylistUpdated}
-        />
-      )}
     </div>
   )
 }
 
-export default PlaylistDetail
+export default SharedPlaylistDetail

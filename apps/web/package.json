@@ -11,35 +11,37 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.15.0",
-    "@supabase/supabase-js": "^2.38.0",
-    "zustand": "^4.4.1",
-    "@tanstack/react-query": "^4.35.0",
-    "socket.io-client": "^4.7.2",
     "@dnd-kit/core": "^6.0.8",
     "@dnd-kit/sortable": "^7.0.2",
     "@dnd-kit/utilities": "^3.2.1",
     "@heroicons/react": "^2.0.18",
+    "@supabase/supabase-js": "^2.55.0",
+    "@tanstack/react-query": "^4.35.0",
+    "@tanstack/react-query-devtools": "^4.36.1",
     "clsx": "^2.0.0",
+    "nanoid": "^5.1.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.15.0",
+    "shared": "workspace:*",
+    "socket.io-client": "^4.7.2",
     "ui": "workspace:*",
-    "shared": "workspace:*"
+    "zustand": "^4.4.1"
   },
   "devDependencies": {
+    "@headlessui/react": "^1.7.17",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^4.0.3",
+    "autoprefixer": "^10.4.15",
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
-    "typescript": "^5.0.2",
-    "vite": "^4.4.5",
-    "tailwindcss": "^3.3.3",
-    "autoprefixer": "^10.4.15",
     "postcss": "^8.4.29",
-    "@headlessui/react": "^1.7.17"
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
   }
 }
