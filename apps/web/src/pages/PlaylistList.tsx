@@ -17,7 +17,7 @@ const PlaylistList: React.FC = () => {
   const [newPlaylistTitle, setNewPlaylistTitle] = useState('')
 
   // React Query 훅들 사용
-  const { data: playlistData, isLoading, error } = useAllUserPlaylists()
+  const { data: playlistData, isLoading } = useAllUserPlaylists()
   const createPlaylistMutation = useCreatePlaylist()
 
   // URL 쿼리 파라미터 확인하여 생성 모달 자동 열기

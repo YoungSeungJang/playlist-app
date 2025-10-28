@@ -2,14 +2,13 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 
 export const useAuth = () => {
-  const { user, token, isAuthenticated, isLoading, login, logout, setUser, setLoading } =
-    useAuthStore()
+  const { user, token, isAuthenticated, isLoading, logout, setUser, setLoading } = useAuthStore()
 
   // 로그인 함수
   const signIn = async (email: string, password: string) => {
     setLoading(true)
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -31,7 +30,7 @@ export const useAuth = () => {
   const signUp = async (email: string, password: string, nickname: string) => {
     setLoading(true)
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -77,7 +76,7 @@ export const useAuth = () => {
   const refreshAuth = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.refreshSession()
+      const { error } = await supabase.auth.refreshSession()
       if (error) {
         console.error('Auth refresh failed:', error)
         logout()

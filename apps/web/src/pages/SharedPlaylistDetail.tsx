@@ -1,40 +1,27 @@
-import {
-  ArrowLeftIcon,
-  MusicalNoteIcon,
-  UserMinusIcon,
-} from '@heroicons/react/24/outline'
-import React, { useState, useEffect } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
-import { Button, Card, Avatar } from 'ui'
-import { getPlaylistById, getPlaylistTracks, removeTrackFromPlaylist, leavePlaylist, type Playlist, type PlaylistTrack } from '@/lib/playlistApi'
-import { supabase } from '@/lib/supabase'
 import TrackItem from '@/components/track/TrackItem'
+import {
+  getPlaylistById,
+  getPlaylistTracks,
+  leavePlaylist,
+  type Playlist,
+  type PlaylistTrack,
+} from '@/lib/playlistApi'
+import { supabase } from '@/lib/supabase'
+import { ArrowLeftIcon, MusicalNoteIcon, UserMinusIcon } from '@heroicons/react/24/outline'
+import React, { useEffect, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { SimpleTrack } from 'shared'
+import { Avatar, Button, Card } from 'ui'
 
 const SharedPlaylistDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  
+
   // API 연결을 위한 상태
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [tracks, setTracks] = useState<PlaylistTrack[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-
-  // 현재 사용자 정보 로드
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        setCurrentUserId(user?.id || null)
-      } catch (error) {
-        console.error('Failed to get current user:', error)
-      }
-    }
-
-    getCurrentUser()
-  }, [])
 
   // 플레이리스트 데이터 로드
   useEffect(() => {
@@ -48,7 +35,7 @@ const SharedPlaylistDetail: React.FC = () => {
         // 플레이리스트 기본 정보와 트랙 목록을 병렬로 조회
         const [playlistData, tracksData] = await Promise.all([
           getPlaylistById(id),
-          getPlaylistTracks(id)
+          getPlaylistTracks(id),
         ])
 
         if (!playlistData) {
@@ -64,9 +51,11 @@ const SharedPlaylistDetail: React.FC = () => {
           .single()
 
         // 현재 사용자의 참여일 조회 (playlist_members 테이블에서)
-        const { data: { user } } = await supabase.auth.getUser()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
         let joinedAt = null
-        
+
         if (user) {
           const { data: memberData } = await supabase
             .from('playlist_members')
@@ -74,7 +63,7 @@ const SharedPlaylistDetail: React.FC = () => {
             .eq('playlist_id', playlistData.id)
             .eq('user_id', user.id)
             .single()
-          
+
           joinedAt = memberData?.joined_at || null
         }
 
@@ -82,7 +71,7 @@ const SharedPlaylistDetail: React.FC = () => {
         const playlistWithOwner = {
           ...playlistData,
           ownerName: ownerData?.nickname || '알 수 없음',
-          joined_at: joinedAt
+          joined_at: joinedAt,
         }
 
         setPlaylist(playlistWithOwner)
@@ -99,7 +88,6 @@ const SharedPlaylistDetail: React.FC = () => {
   }, [id])
 
   // 현재 사용자는 멤버이므로 편집 권한 없음 (소유자가 아니므로)
-  const canEdit = false
 
   // 총 재생시간 계산 함수
   const calculateTotalDuration = (tracks: PlaylistTrack[]): string => {
@@ -107,7 +95,7 @@ const SharedPlaylistDetail: React.FC = () => {
     const totalMinutes = Math.floor(totalMs / 60000)
     const hours = Math.floor(totalMinutes / 60)
     const minutes = totalMinutes % 60
-    
+
     if (hours > 0) {
       return `${hours}시간 ${minutes}분`
     }
@@ -165,7 +153,7 @@ const SharedPlaylistDetail: React.FC = () => {
     const date = new Date(dateString)
     const now = new Date()
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    
+
     if (diffInSeconds < 60) return '방금 전'
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}분 전`
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}시간 전`
@@ -241,7 +229,9 @@ const SharedPlaylistDetail: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h3 className="text-xl font-medium text-gray-900 mb-2">플레이리스트를 찾을 수 없습니다</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            플레이리스트를 찾을 수 없습니다
+          </h3>
           <Link
             to="/shared"
             className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
@@ -279,7 +269,7 @@ const SharedPlaylistDetail: React.FC = () => {
             </div>
 
             <h1 className="text-4xl font-bold text-gray-900 mb-4">{playlist.title}</h1>
-            
+
             {/* 소유자 정보 표시 */}
             <div className="flex items-center space-x-2 mb-4">
               <Avatar name={playlist.ownerName || '알 수 없음'} size="sm" />
@@ -291,13 +281,15 @@ const SharedPlaylistDetail: React.FC = () => {
             <div className="flex items-center space-x-6 text-sm text-gray-500 mb-6">
               <span>{tracks.length}곡</span>
               <span>{calculateTotalDuration(tracks)}</span>
-              <span>참여일: {playlist.joined_at ? getTimeAgo(playlist.joined_at) : '알 수 없음'}</span>
+              <span>
+                참여일: {playlist.joined_at ? getTimeAgo(playlist.joined_at) : '알 수 없음'}
+              </span>
             </div>
 
             {/* Action buttons - 나가기 버튼 */}
             <div className="flex items-center space-x-4">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="lg"
                 onClick={handleLeavePlaylist}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -313,7 +305,6 @@ const SharedPlaylistDetail: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main content */}
         <div className="lg:col-span-3 space-y-6">
-
           {/* Tracks list */}
           <Card variant="default" padding="none">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -328,15 +319,13 @@ const SharedPlaylistDetail: React.FC = () => {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     아직 추가된 곡이 없습니다
                   </h3>
-                  <p className="text-gray-500 mb-4">
-                    플레이리스트가 비어있습니다.
-                  </p>
+                  <p className="text-gray-500 mb-4">플레이리스트가 비어있습니다.</p>
                 </div>
               ) : (
                 tracks.map((track, index) => (
-                  <TrackItem 
-                    key={track.id} 
-                    track={convertToSimpleTrack(track)} 
+                  <TrackItem
+                    key={track.id}
+                    track={convertToSimpleTrack(track)}
                     index={index}
                     showAlbum={true}
                     showIndex={true}
@@ -367,7 +356,9 @@ const SharedPlaylistDetail: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">참여일</span>
-                <span className="font-medium">{playlist.joined_at ? getTimeAgo(playlist.joined_at) : '알 수 없음'}</span>
+                <span className="font-medium">
+                  {playlist.joined_at ? getTimeAgo(playlist.joined_at) : '알 수 없음'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">최종 업데이트</span>
@@ -389,7 +380,6 @@ const SharedPlaylistDetail: React.FC = () => {
           </Card>
         </div>
       </div>
-
     </div>
   )
 }
