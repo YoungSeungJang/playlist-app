@@ -1,13 +1,19 @@
-import { spotifyConfig } from '@/config/spotify'
+import { spotifyConfig } from '../config/spotify'
 import axios from 'axios'
-import { SimpleArtist, SimpleTrack, SimpleAlbum } from '@shared/types/music'
-import { formatDuration } from '@shared/utils/time'
+import type { SimpleArtist, SimpleTrack, SimpleAlbum } from '../../../../packages/shared/src/types/music'
 import {
   SpotifyTrack,
   type SpotifyAlbum,
   type SpotifyArtist,
   type SpotifyTokenResponse,
 } from '../types/spotify'
+
+// Duration formatting helper (inline to avoid shared utils dependency)
+const formatDuration = (ms: number): string => {
+  const minutes = Math.floor(ms / 60000)
+  const seconds = Math.floor((ms % 60000) / 1000)
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
 
 // 토큰 관리용 변수들 (모듈 레벨)
 let accessToken: string | null = null
