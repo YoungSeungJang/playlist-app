@@ -26,7 +26,9 @@ const SearchPage: React.FC = () => {
 
       setIsSearching(true)
       try {
-        const apiUrl = `http://localhost:3001/api/spotify/search?q=${encodeURIComponent(query)}`
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/spotify'
+        console.log(API_BASE)
+        const apiUrl = `${API_BASE}/search?q=${encodeURIComponent(query)}`
         const response = await fetch(apiUrl)
 
         if (!response.ok) {

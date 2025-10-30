@@ -52,7 +52,8 @@ const ArtistDetailPage: React.FC = () => {
       setError(null)
 
       try {
-        const apiUrl = `http://localhost:3001/api/spotify/artist/${id}`
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/spotify'
+        const apiUrl = `${API_BASE}/artist/${id}`
         const response = await fetch(apiUrl)
 
         if (!response.ok) {

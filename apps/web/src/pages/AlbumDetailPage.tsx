@@ -49,7 +49,8 @@ const AlbumDetailPage: React.FC = () => {
       setError(null)
 
       try {
-        const apiUrl = `http://localhost:3001/api/spotify/album/${id}/tracks`
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/spotify'
+        const apiUrl = `${API_BASE}/album/${id}/tracks`
         const response = await fetch(apiUrl)
 
         if (!response.ok) {

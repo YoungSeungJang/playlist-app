@@ -22,7 +22,8 @@ const ArtistsPage: React.FC = () => {
 
       setIsSearching(true)
       try {
-        const apiUrl = `http://localhost:3001/api/spotify/search?q=${encodeURIComponent(query)}&type=artist&limit=20`
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/spotify'
+        const apiUrl = `${API_BASE}/search?q=${encodeURIComponent(query)}&type=artist&limit=20`
         const response = await fetch(apiUrl)
 
         if (!response.ok) {

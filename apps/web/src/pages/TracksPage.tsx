@@ -1,12 +1,12 @@
+import TrackItem from '@/components/track/TrackItem'
+import { useAddToPlaylist } from '@/hooks/useAddToPlaylist'
+import { usePlaylistStore } from '@/store/playlistStore'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { SimpleTrack } from 'shared'
-import SearchNavigation from '../components/search/SearchNavigation'
 import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal'
-import { useAddToPlaylist } from '@/hooks/useAddToPlaylist'
-import { usePlaylistStore } from '@/store/playlistStore'
-import TrackItem from '@/components/track/TrackItem'
+import SearchNavigation from '../components/search/SearchNavigation'
 
 const TracksPage: React.FC = () => {
   const { query } = useParams<{ query: string }>()
@@ -36,7 +36,8 @@ const TracksPage: React.FC = () => {
 
       setIsSearching(true)
       try {
-        const apiUrl = `http://localhost:3001/api/spotify/search?q=${encodeURIComponent(query)}&type=track&limit=20`
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/spotify'
+        const apiUrl = `${API_BASE}/search?q=${encodeURIComponent(query)}&type=track&limit=20`
         const response = await fetch(apiUrl)
 
         if (!response.ok) {
