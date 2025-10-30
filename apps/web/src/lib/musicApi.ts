@@ -62,13 +62,10 @@ export interface ArtistDetail {
   albums: SpotifyAlbum[]
 }
 
-const API_BASE_URL = 'http://localhost:3001/api/spotify'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/spotify'
 
 // 통합 음악 검색
-export async function searchMusic(
-  query: string,
-  limit: number = 20
-): Promise<SearchResult> {
+export async function searchMusic(query: string, limit: number = 20): Promise<SearchResult> {
   const response = await fetch(
     `${API_BASE_URL}/search?q=${encodeURIComponent(query)}&limit=${limit}`
   )
