@@ -1,47 +1,17 @@
 import { MagnifyingGlassIcon, UserIcon } from '@heroicons/react/24/outline'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { SimpleArtist } from 'shared'
 import SearchNavigation from '../components/search/SearchNavigation'
+import { useSearchArtists } from '@/hooks/queries/useMusicQueries'
 
 
 const ArtistsPage: React.FC = () => {
   const { query } = useParams<{ query: string }>()
   const navigate = useNavigate()
 
-  const [artists, setArtists] = useState<SimpleArtist[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-
-  // 검색 API 호출 (아티스트만, URL 쿼리로 즉시 검색)
-  useEffect(() => {
-    const performSearch = async () => {
-      if (!query || query.length < 1) {
-        setArtists([])
-        return
-      }
-
-      setIsSearching(true)
-      try {
-        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/spotify'
-        const apiUrl = `${API_BASE}/search?q=${encodeURIComponent(query)}&type=artist&limit=20`
-        const response = await fetch(apiUrl)
-
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status}`)
-        }
-
-        const data = await response.json()
-        setArtists(data.artists || [])
-      } catch (error) {
-        console.error('Artist search failed:', error)
-        setArtists([])
-      } finally {
-        setIsSearching(false)
-      }
-    }
-
-    performSearch()
-  }, [query])
+  // React Query로 검색 결과 캐싱
+  const { data: artists = [], isLoading } = useSearchArtists(query || '')
 
   const handleArtistClick = (artist: SimpleArtist) => {
     navigate(`/artist/${artist.id}`)
@@ -63,7 +33,7 @@ const ArtistsPage: React.FC = () => {
         {query && query.length >= 1 && <SearchNavigation query={query || ''} />}
 
         {/* 검색 상태 */}
-        {isSearching && (
+        {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
             <span className="ml-3 text-gray-600">아티스트 검색 중...</span>
@@ -71,7 +41,7 @@ const ArtistsPage: React.FC = () => {
         )}
 
         {/* 검색 결과가 없는 경우 */}
-        {!isSearching && query && query.length >= 1 && artists.length === 0 && (
+        {!isLoading && query && query.length >= 1 && artists.length === 0 && (
           <div className="text-center py-16">
             <MagnifyingGlassIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
             <h3 className="text-xl font-medium text-gray-900 mb-2">
@@ -82,7 +52,7 @@ const ArtistsPage: React.FC = () => {
         )}
 
         {/* 아티스트 검색 결과 */}
-        {!isSearching && query && query.length >= 1 && artists.length > 0 && (
+        {!isLoading && query && query.length >= 1 && artists.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">아티스트</h2>

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import React from 'react'
+import type { SimpleTrack, SimpleArtist, SimpleAlbum } from 'shared'
 import {
   getAlbumDetail,
   getArtistDetail,
@@ -22,35 +23,49 @@ export const useSearchMusic = (query: string, limit: number = 20) => {
   })
 }
 
-// 타입별 음악 검색
-export const useSearchByType = (
-  query: string,
-  type: 'track' | 'artist' | 'album',
-  limit: number = 20
-) => {
-  return useQuery({
-    queryKey: ['music-search', type, query, limit],
-    queryFn: () => searchByType(query, type, limit),
+// 트랙만 검색
+export const useSearchTracks = (query: string, limit: number = 20) => {
+  return useQuery<SimpleTrack[]>({
+    queryKey: ['music-search', 'track', query, limit],
+    queryFn: async () => {
+      const result = await searchByType(query, 'track', limit)
+      return result.tracks || []
+    },
     enabled: !!query && query.trim().length > 0,
-    staleTime: 5 * 60 * 1000, // 5분간 캐시
-    cacheTime: 30 * 60 * 1000, // 30분간 보관
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
     keepPreviousData: false,
   })
 }
 
-// 트랙만 검색
-export const useSearchTracks = (query: string, limit: number = 20) => {
-  return useSearchByType(query, 'track', limit)
-}
-
 // 아티스트만 검색
 export const useSearchArtists = (query: string, limit: number = 20) => {
-  return useSearchByType(query, 'artist', limit)
+  return useQuery<SimpleArtist[]>({
+    queryKey: ['music-search', 'artist', query, limit],
+    queryFn: async () => {
+      const result = await searchByType(query, 'artist', limit)
+      return result.artists || []
+    },
+    enabled: !!query && query.trim().length > 0,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
+    keepPreviousData: false,
+  })
 }
 
 // 앨범만 검색
 export const useSearchAlbums = (query: string, limit: number = 20) => {
-  return useSearchByType(query, 'album', limit)
+  return useQuery<SimpleAlbum[]>({
+    queryKey: ['music-search', 'album', query, limit],
+    queryFn: async () => {
+      const result = await searchByType(query, 'album', limit)
+      return result.albums || []
+    },
+    enabled: !!query && query.trim().length > 0,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
+    keepPreviousData: false,
+  })
 }
 
 // 특정 트랙 상세 정보 조회
